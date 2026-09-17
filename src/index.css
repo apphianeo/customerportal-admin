@@ -1,0 +1,80 @@
+@import url("https://fonts.googleapis.com/css2?family=Noto+Sans:ital,wght@0,400;0,500;0,600;0,700&display=swap");
+
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+@layer base {
+  :root {
+    /* --- Base surfaces --- */
+    --background: 0 0% 100%; /* #FFFFFF */
+    --foreground: 0 0% 13%; /* #212121 text-primary */
+
+    --card: 0 0% 100%;
+    --card-foreground: 0 0% 13%;
+
+    --popover: 0 0% 100%;
+    --popover-foreground: 0 0% 13%;
+
+    /* --- Brand primary (UOI sureblue #005EB8) --- */
+    --primary: 209 100% 36%;
+    --primary-foreground: 0 0% 100%;
+
+    /* --- Secondary / neutral surfaces --- */
+    --secondary: 218 39% 98%; /* whitewashed #F6F8FC */
+    --secondary-foreground: 0 0% 13%;
+
+    --muted: 210 20% 98%; /* subtle offwhite #F9FAFB */
+    --muted-foreground: 0 0% 43%; /* #6E6E6E text-secondary */
+
+    --accent: 218 39% 98%;
+    --accent-foreground: 209 100% 36%;
+
+    /* --- Status --- */
+    --destructive: 0 72% 51%; /* #DC2626 */
+    --destructive-foreground: 0 0% 100%;
+    --destructive-bg: 0 86% 97%; /* #FEF2F2 */
+
+    --success: 159 87% 25%; /* #08754F */
+    --success-foreground: 0 0% 100%;
+    --success-bg: 152 71% 96%; /* #ECFDF5 */
+
+    --caution: 34 100% 35%; /* #B06F00 text */
+    --caution-bg: 40 100% 96%; /* #FFF8EC */
+
+    --info: 209 100% 36%; /* #005EB8 */
+    --info-bg: 214 100% 97%; /* #EFF6FF */
+
+    --neutral: 0 0% 43%; /* #6E6E6E */
+    --neutral-bg: 0 0% 95%; /* #F2F2F2 grey-tag */
+
+    /* --- Text scale extras --- */
+    --text-secondary: 0 0% 43%; /* #6E6E6E */
+    --text-tertiary: 0 0% 58%; /* #949494 */
+
+    /* --- Backgrounds --- */
+    --bg-subtle: 210 20% 98%; /* #F9FAFB */
+    --bg-washed: 218 39% 98%; /* #F6F8FC */
+
+    /* --- Disabled --- */
+    --disabled-field: 0 0% 96%; /* #F5F5F5 */
+    --disabled-button: 0 0% 88%; /* #E0E0E0 */
+
+    /* --- Lines / inputs --- */
+    --border: 220 13% 91%; /* #E5E7EB subtle line */
+    --input: 220 13% 91%;
+    --ring: 209 100% 36%;
+
+    --radius: 0.5rem; /* 8px — buttons/inputs; cards use rounded-[12px] */
+  }
+}
+
+@layer base {
+  * {
+    @apply border-border;
+  }
+  body {
+    @apply bg-background text-foreground font-sans antialiased;
+    font-feature-settings: "rlig" 1, "calt" 1;
+  }
+}
