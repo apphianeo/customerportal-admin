@@ -1,11 +1,12 @@
 import { NavLink } from "react-router-dom"
-import { Clock, HelpCircle, PanelLeftClose, Users } from "lucide-react"
+import { PanelLeft } from "lucide-react"
 import { Logo } from "./Logo"
+import { CustomersIcon, ActivityLogIcon } from "./icons"
 import { cn } from "@/lib/utils"
 
 const NAV = [
-  { to: "/customers", label: "Customers", icon: Users },
-  { to: "/activity-log", label: "Activity Log", icon: Clock },
+  { to: "/customers", label: "Customers", icon: CustomersIcon },
+  { to: "/activity-log", label: "Activity Log", icon: ActivityLogIcon },
 ]
 
 export function Sidebar() {
@@ -18,11 +19,11 @@ export function Sidebar() {
           aria-label="Collapse sidebar"
           className="grid h-5 w-5 place-items-center text-text-tertiary hover:text-text-secondary"
         >
-          <PanelLeftClose className="h-4 w-4" />
+          <PanelLeft className="h-4 w-4" />
         </button>
       </div>
 
-      <nav className="flex flex-1 flex-col gap-3">
+      <nav className="flex flex-col gap-3">
         {NAV.map(({ to, label, icon: Icon }) => (
           <NavLink
             key={to}
@@ -36,19 +37,20 @@ export function Sidebar() {
               )
             }
           >
-            <Icon className="h-5 w-5 shrink-0" />
-            {label}
+            {({ isActive }) => (
+              <>
+                <Icon
+                  className={cn(
+                    "h-5 w-5 shrink-0",
+                    isActive ? "text-primary" : "text-text-secondary"
+                  )}
+                />
+                {label}
+              </>
+            )}
           </NavLink>
         ))}
       </nav>
-
-      <a
-        href="#"
-        className="flex items-center gap-3 rounded-md px-3 py-2.5 text-sm text-text-secondary hover:bg-muted"
-      >
-        <HelpCircle className="h-5 w-5 shrink-0" />
-        Help &amp; Support
-      </a>
     </aside>
   )
 }
