@@ -53,7 +53,7 @@ export function OutlookAuthPage() {
             </button>
             <button
               type="button"
-              onClick={() => navigate("/?error=1")}
+              onClick={pickAccount}
               className="flex w-full items-center gap-3 px-1 py-3 text-left text-sm text-[#605e5c] hover:bg-[#f5f5f5]"
             >
               <span className="grid size-9 place-items-center rounded-full border border-[#d1d1d1] text-[#605e5c]">
