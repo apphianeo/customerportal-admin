@@ -1,13 +1,19 @@
 import { useMemo, useState } from "react"
-import { ChevronLeft, ChevronRight, Download, Search } from "lucide-react"
-import { Badge } from "@/components/ui/badge"
+import { ChevronsUpDown, Download, Search } from "lucide-react"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
+import { Pagination } from "./CustomersPage"
 import { activityLog as ALL } from "@/data/activity"
 import { cn } from "@/lib/utils"
 
-const PAGE_SIZE = 10
-const COLUMNS = ["Timestamp (SGT)", "Activity", "Customer", "Admin", "Role"]
+const PAGE_SIZE = 20
+
+// Actions that reduce or reset access show a red dot; routine updates show green.
+const RED_ACTIONS = new Set([
+  "Deactivated account",
+  "Disabled account",
+  "Reset password",
+])
 
 export function ActivityLogPage() {
   const [query, setQuery] = useState("")
@@ -31,44 +37,51 @@ export function ActivityLogPage() {
   const rows = filtered.slice((current - 1) * PAGE_SIZE, current * PAGE_SIZE)
 
   return (
-    <div className="p-8">
+    <div className="bg-bg-page p-8">
       <div className="mx-auto flex w-full max-w-[1200px] flex-col gap-8">
         <h1 className="text-[32px] font-semibold leading-[1.2] text-foreground">
           Activity Log
         </h1>
 
-        <div className="overflow-hidden rounded-[12px] border border-border bg-white shadow-[0px_1px_4px_0px_rgba(0,0,0,0.05)]">
-          <div className="flex flex-wrap items-center gap-3 border-b border-border p-4">
-            <div className="relative min-w-[260px] flex-1">
-              <Search className="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-text-tertiary" />
-              <Input
-                value={query}
-                onChange={(e) => {
-                  setQuery(e.target.value)
-                  setPage(1)
-                }}
-                placeholder="Search admin, action or customer"
-                className="pl-9"
-              />
-            </div>
-            <Button variant="outline" size="sm" className="h-12 px-4">
-              <Download className="h-4 w-4" />
-              Export Log
-            </Button>
+        {/* Toolbar */}
+        <div className="flex flex-wrap items-center gap-3">
+          <div className="relative w-[360px] max-w-full">
+            <Search className="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-text-tertiary" />
+            <Input
+              value={query}
+              onChange={(e) => {
+                setQuery(e.target.value)
+                setPage(1)
+              }}
+              placeholder="Search admin, action or customer"
+              className="pl-9"
+            />
           </div>
+          <Button
+            variant="outline"
+            className="ml-auto h-12 border-primary text-primary hover:bg-info-bg"
+          >
+            Export Log
+            <Download className="h-4 w-4" />
+          </Button>
+        </div>
 
+        {/* Table card */}
+        <div className="overflow-hidden rounded-[12px] border border-border bg-white shadow-[0px_1px_4px_0px_rgba(0,0,0,0.05)]">
           <div className="w-full overflow-x-auto">
             <table className="w-full border-collapse text-left">
               <thead>
-                <tr className="bg-muted">
-                  {COLUMNS.map((c) => (
-                    <th
-                      key={c}
-                      className="whitespace-nowrap px-4 py-3 text-sm font-medium text-text-tertiary"
-                    >
-                      {c}
-                    </th>
-                  ))}
+                <tr className="border-b border-border bg-muted">
+                  <th className="whitespace-nowrap px-4 py-3 text-sm font-medium text-text-tertiary">
+                    <span className="inline-flex cursor-pointer items-center gap-1">
+                      Timestamp (SGT)
+                      <ChevronsUpDown className="h-3.5 w-3.5" />
+                    </span>
+                  </th>
+                  <th className="px-4 py-3 text-sm font-medium text-text-tertiary">Activity</th>
+                  <th className="px-4 py-3 text-sm font-medium text-text-tertiary">Customer</th>
+                  <th className="px-4 py-3 text-sm font-medium text-text-tertiary">Admin</th>
+                  <th className="px-4 py-3 text-sm font-medium text-text-tertiary">Role</th>
                 </tr>
               </thead>
               <tbody>
@@ -78,7 +91,15 @@ export function ActivityLogPage() {
                       {e.timestamp}
                     </td>
                     <td className="px-4 py-3 align-top text-sm text-foreground">
-                      {e.activity}
+                      <span className="inline-flex items-center gap-2">
+                        <span
+                          className={cn(
+                            "size-2 shrink-0 rounded-full",
+                            RED_ACTIONS.has(e.activity) ? "bg-destructive" : "bg-success"
+                          )}
+                        />
+                        {e.activity}
+                      </span>
                     </td>
                     <td className="px-4 py-3 align-top">
                       <div className="flex flex-col">
@@ -92,19 +113,14 @@ export function ActivityLogPage() {
                         <span className="text-xs text-text-tertiary">{e.admin.email}</span>
                       </div>
                     </td>
-                    <td className="px-4 py-3 align-top">
-                      <Badge tone={e.admin.role === "Master Admin" ? "info" : "neutral"}>
-                        {e.admin.role}
-                      </Badge>
+                    <td className="whitespace-nowrap px-4 py-3 align-top text-sm text-text-secondary">
+                      {e.admin.role}
                     </td>
                   </tr>
                 ))}
                 {rows.length === 0 && (
                   <tr>
-                    <td
-                      colSpan={COLUMNS.length}
-                      className="px-4 py-16 text-center text-sm text-text-secondary"
-                    >
+                    <td colSpan={5} className="px-4 py-16 text-center text-sm text-text-secondary">
                       No activity matches your search.
                     </td>
                   </tr>
@@ -120,41 +136,9 @@ export function ActivityLogPage() {
                 : `Showing ${(current - 1) * PAGE_SIZE + 1}-${Math.min(
                     current * PAGE_SIZE,
                     filtered.length
-                  )} of ${filtered.length}`}
+                  )} of ${filtered.length.toLocaleString()}`}
             </p>
-            <div className="flex items-center gap-1.5">
-              <button
-                type="button"
-                disabled={current <= 1}
-                onClick={() => setPage(current - 1)}
-                className="grid size-10 place-items-center rounded-md text-text-secondary hover:bg-muted disabled:opacity-40"
-                aria-label="Previous page"
-              >
-                <ChevronLeft className="h-4 w-4" />
-              </button>
-              {Array.from({ length: totalPages }, (_, i) => i + 1).map((p) => (
-                <button
-                  key={p}
-                  type="button"
-                  onClick={() => setPage(p)}
-                  className={cn(
-                    "size-10 rounded-md text-sm",
-                    p === current ? "bg-primary text-white" : "text-foreground hover:bg-muted"
-                  )}
-                >
-                  {p}
-                </button>
-              ))}
-              <button
-                type="button"
-                disabled={current >= totalPages}
-                onClick={() => setPage(current + 1)}
-                className="grid size-10 place-items-center rounded-md text-text-secondary hover:bg-muted disabled:opacity-40"
-                aria-label="Next page"
-              >
-                <ChevronRight className="h-4 w-4" />
-              </button>
-            </div>
+            <Pagination page={current} totalPages={totalPages} onChange={setPage} />
           </div>
         </div>
       </div>
