@@ -181,7 +181,17 @@ export function CustomersPage() {
         {/* Table card */}
         <div className="overflow-hidden rounded-[12px] border border-border bg-white shadow-[0px_1px_4px_0px_rgba(0,0,0,0.05)]">
           <div className="w-full overflow-x-auto">
-            <table className="w-full border-collapse text-left">
+            <table className="w-full min-w-[1120px] table-fixed border-collapse text-left">
+              <colgroup>
+                <col className="w-[210px]" />
+                <col className="w-[170px]" />
+                <col className="w-[120px]" />
+                <col className="w-[140px]" />
+                <col className="w-[120px]" />
+                <col className="w-[140px]" />
+                <col className="w-[150px]" />
+                <col className="w-[70px]" />
+              </colgroup>
               <thead>
                 <tr className="border-b border-border bg-muted">
                   <Th>Login ID (email address)</Th>
@@ -211,23 +221,23 @@ export function CustomersPage() {
                     onClick={() => navigate(`/customers/${c.id}`)}
                     className="cursor-pointer border-b border-border last:border-0 hover:bg-muted/60"
                   >
-                    <td className="max-w-[210px] truncate px-3 py-3 text-sm text-text-secondary">
+                    <td className="truncate px-3 py-3 text-sm text-text-secondary">
                       {c.loginId}
                     </td>
-                    <td className="whitespace-nowrap px-3 py-3 text-sm text-foreground">
+                    <td className="truncate px-3 py-3 text-sm text-foreground">
                       {c.fullName}
                     </td>
-                    <td className="px-3 py-3 text-sm text-text-secondary">{c.nric}</td>
-                    <td className="whitespace-nowrap px-3 py-3 text-sm text-text-secondary">
+                    <td className="truncate px-3 py-3 text-sm text-text-secondary">{c.nric}</td>
+                    <td className="truncate px-3 py-3 text-sm text-text-secondary">
                       {c.mobile}
                     </td>
                     <td className="px-3 py-3">
                       <Badge tone={STATUS_TONE[c.status]}>{c.status}</Badge>
                     </td>
-                    <td className="whitespace-nowrap px-3 py-3 text-sm text-text-secondary">
+                    <td className="truncate px-3 py-3 text-sm text-text-secondary">
                       {c.creationDate}
                     </td>
-                    <td className="max-w-[150px] truncate px-3 py-3 text-sm text-text-secondary">
+                    <td className="truncate px-3 py-3 text-sm text-text-secondary">
                       {c.lastLogin}
                     </td>
                     <td className="px-3 py-3" onClick={(e) => e.stopPropagation()}>
@@ -268,9 +278,9 @@ export function CustomersPage() {
             </table>
           </div>
 
-          {/* Footer */}
-          <div className="flex items-center justify-between border-t border-border p-4">
-            <p className="text-sm text-text-tertiary">
+          {/* Footer — pagination centered, count on the left */}
+          <div className="flex items-center border-t border-border p-4">
+            <p className="flex-1 text-sm text-text-tertiary">
               {filtered.length === 0
                 ? "No results"
                 : `Showing ${(current - 1) * PAGE_SIZE + 1}-${Math.min(
@@ -279,6 +289,7 @@ export function CustomersPage() {
                   )} of ${filtered.length.toLocaleString()}`}
             </p>
             <Pagination page={current} totalPages={totalPages} onChange={setPage} />
+            <div className="flex-1" />
           </div>
         </div>
       </div>

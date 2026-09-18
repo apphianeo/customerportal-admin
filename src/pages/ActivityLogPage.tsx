@@ -84,7 +84,14 @@ export function ActivityLogPage() {
         {/* Table card */}
         <div className="overflow-hidden rounded-[12px] border border-border bg-white shadow-[0px_1px_4px_0px_rgba(0,0,0,0.05)]">
           <div className="w-full overflow-x-auto">
-            <table className="w-full border-collapse text-left">
+            <table className="w-full min-w-[1000px] table-fixed border-collapse text-left">
+              <colgroup>
+                <col className="w-[200px]" />
+                <col className="w-[300px]" />
+                <col className="w-[210px]" />
+                <col className="w-[250px]" />
+                <col className="w-[120px]" />
+              </colgroup>
               <thead>
                 <tr className="border-b border-border bg-muted">
                   <th className="whitespace-nowrap px-4 py-3 text-sm font-medium text-text-tertiary">
@@ -121,15 +128,15 @@ export function ActivityLogPage() {
                       </span>
                     </td>
                     <td className="px-4 py-3 align-top">
-                      <div className="flex flex-col">
-                        <span className="text-sm text-foreground">{e.customerName}</span>
-                        <span className="text-xs text-text-tertiary">{e.customerNric}</span>
+                      <div className="flex min-w-0 flex-col">
+                        <span className="truncate text-sm text-foreground">{e.customerName}</span>
+                        <span className="truncate text-xs text-text-tertiary">{e.customerNric}</span>
                       </div>
                     </td>
                     <td className="px-4 py-3 align-top">
-                      <div className="flex flex-col">
-                        <span className="text-sm text-foreground">{e.admin.name}</span>
-                        <span className="text-xs text-text-tertiary">{e.admin.email}</span>
+                      <div className="flex min-w-0 flex-col">
+                        <span className="truncate text-sm text-foreground">{e.admin.name}</span>
+                        <span className="truncate text-xs text-text-tertiary">{e.admin.email}</span>
                       </div>
                     </td>
                     <td className="whitespace-nowrap px-4 py-3 align-top text-sm text-text-secondary">
@@ -148,9 +155,9 @@ export function ActivityLogPage() {
             </table>
           </div>
 
-          {/* Footer */}
-          <div className="flex items-center justify-between border-t border-border p-4">
-            <p className="text-sm text-text-tertiary">
+          {/* Footer — pagination centered, count on the left */}
+          <div className="flex items-center border-t border-border p-4">
+            <p className="flex-1 text-sm text-text-tertiary">
               {filtered.length === 0
                 ? "No results"
                 : `Showing ${(current - 1) * PAGE_SIZE + 1}-${Math.min(
@@ -159,6 +166,7 @@ export function ActivityLogPage() {
                   )} of ${filtered.length.toLocaleString()}`}
             </p>
             <Pagination page={current} totalPages={totalPages} onChange={setPage} />
+            <div className="flex-1" />
           </div>
         </div>
       </div>
