@@ -86,7 +86,66 @@ const SEEDS: Seed[] = [
   { loginId: "chloe.ng@example.com", fullName: "Chloe Ng Jia Yi", nric: "S9528314A", mobile: "+65 8467 9210", status: "Active", creationDate: "15/03/2024", lastLogin: "08/09/2026, 11:42:19", salutation: "Ms", dob: "07/08/1996" },
 ]
 
-export const customers: Customer[] = SEEDS.map((s, i) => ({
+// ── Generate additional rows so the table paginates like the real system ──
+const FIRST = [
+  "Aaron", "Bryan", "Cheryl", "Damien", "Evelyn", "Felicia", "Gerald", "Hazel",
+  "Ivan", "Joanne", "Kelvin", "Larissa", "Melvin", "Natalie", "Oscar", "Pamela",
+  "Ryan", "Serena", "Terrence", "Ursula", "Victor", "Wendy", "Xavier", "Yvonne",
+  "Zachary", "Amira", "Benedict", "Clarissa", "Dylan", "Esther", "Fabian",
+  "Geraldine", "Harith", "Irene", "Jonas", "Karthik", "Lydia", "Manoj", "Nadia",
+  "Owen", "Priscilla", "Qiang", "Rebecca", "Siva", "Trish", "Umar", "Valerie",
+]
+const LAST = [
+  "Tan", "Lim", "Lee", "Ng", "Wong", "Chan", "Goh", "Ong", "Teo", "Koh",
+  "Yeo", "Sim", "Chua", "Low", "Foo", "Ho", "Toh", "Ang", "Chong", "Neo",
+  "Nair", "Kumar", "Rahman", "Fernandez", "Sharma", "Menon", "Das", "Iqbal",
+  "Sato", "Kimura", "Lin", "Fang", "Zhang", "Wang", "Chen", "Liu",
+]
+const STATUS_CYCLE: CustomerStatus[] = [
+  "Active", "Active", "Active", "Active", "Active", "Active", "Active",
+  "Deactivated", "Active", "Active", "Disabled", "Active",
+]
+const PREFIX = ["S", "S", "S", "S", "G", "T"]
+
+function pad(n: number, len: number) {
+  return String(n).padStart(len, "0")
+}
+
+function generate(count: number, startId: number): Seed[] {
+  const out: Seed[] = []
+  for (let i = 0; i < count; i++) {
+    const first = FIRST[i % FIRST.length]
+    const last = LAST[(i * 7 + 3) % LAST.length]
+    const fullName = `${first} ${last}`
+    const login = `${first}.${last}${i}`.toLowerCase()
+    const nric = `${PREFIX[i % PREFIX.length]}${pad(1000000 + ((i * 48271) % 8999999), 7)}${"ABCDEFGHJKLZ"[i % 12]}`
+    const mobile = `+65 ${8 + (i % 2)}${pad((i * 317) % 1000, 3)} ${pad((i * 719) % 10000, 4)}`
+    const yy = 2023 + (i % 2)
+    const monthN = (i % 12) + 1
+    const dayN = ((i * 3) % 27) + 1
+    const mm = pad(monthN, 2)
+    const dd = pad(dayN, 2)
+    const hh = pad((i * 5) % 24, 2)
+    const mi = pad((i * 13) % 60, 2)
+    const ss = pad((i * 7) % 60, 2)
+    out.push({
+      loginId: `${login}@example.com`,
+      fullName,
+      nric,
+      mobile,
+      status: STATUS_CYCLE[i % STATUS_CYCLE.length],
+      creationDate: `${dd}/${mm}/${yy}`,
+      lastLogin: `${pad((dayN % 28) + 1, 2)}/${mm}/2026, ${hh}:${mi}:${ss}`,
+      salutation: i % 2 === 0 ? "Mr" : "Ms",
+      dob: `${pad(((i * 2) % 27) + 1, 2)}/${pad(((i * 5) % 12) + 1, 2)}/${1980 + (i % 20)}`,
+    })
+  }
+  return out
+}
+
+const ALL_SEEDS: Seed[] = [...SEEDS, ...generate(190, SEEDS.length + 1)]
+
+export const customers: Customer[] = ALL_SEEDS.map((s, i) => ({
   id: String(i + 1),
   loginId: s.loginId,
   salutation: s.salutation ?? "Mr",

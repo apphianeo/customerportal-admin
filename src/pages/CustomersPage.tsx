@@ -1,9 +1,9 @@
 import { useMemo, useState } from "react"
 import { useNavigate } from "react-router-dom"
 import {
+  ChevronDown,
   ChevronLeft,
   ChevronRight,
-  ChevronsUpDown,
   Download,
   MoreHorizontal,
   Search,
@@ -12,18 +12,12 @@ import { Badge } from "@/components/ui/badge"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from "@/components/ui/select"
-import {
   DropdownMenu,
   DropdownMenuContent,
   DropdownMenuItem,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu"
+import { CheckboxSquare, SortIcon } from "@/components/icons"
 import {
   customers as ALL,
   STATUS_TONE,
@@ -32,17 +26,32 @@ import {
 import { cn } from "@/lib/utils"
 
 const PAGE_SIZE = 20
+const STATUSES: CustomerStatus[] = ["Active", "Deactivated", "Disabled"]
+type SortKey = "creationDate" | "lastLogin"
+type SortDir = "asc" | "desc"
+
+function toTime(d: string): number {
+  const [datePart, timePart] = d.split(", ")
+  const [dd, mm, yy] = datePart.split("/").map(Number)
+  let h = 0, mi = 0, s = 0
+  if (timePart) [h, mi, s] = timePart.split(":").map(Number)
+  return new Date(yy, mm - 1, dd, h, mi, s).getTime()
+}
 
 export function CustomersPage() {
   const navigate = useNavigate()
   const [query, setQuery] = useState("")
-  const [status, setStatus] = useState<CustomerStatus | "all">("all")
+  const [selected, setSelected] = useState<Set<CustomerStatus>>(new Set(STATUSES))
   const [page, setPage] = useState(1)
+  const [sortKey, setSortKey] = useState<SortKey | null>(null)
+  const [sortDir, setSortDir] = useState<SortDir>("asc")
+
+  const allSelected = selected.size === STATUSES.length
 
   const filtered = useMemo(() => {
     const q = query.trim().toLowerCase()
-    return ALL.filter((c) => {
-      if (status !== "all" && c.status !== status) return false
+    const rows = ALL.filter((c) => {
+      if (!allSelected && !selected.has(c.status)) return false
       if (!q) return true
       return (
         c.fullName.toLowerCase().includes(q) ||
@@ -50,7 +59,14 @@ export function CustomersPage() {
         c.nric.toLowerCase().includes(q)
       )
     })
-  }, [query, status])
+    if (sortKey) {
+      rows.sort((a, b) => {
+        const diff = toTime(a[sortKey]) - toTime(b[sortKey])
+        return sortDir === "asc" ? diff : -diff
+      })
+    }
+    return rows
+  }, [query, selected, allSelected, sortKey, sortDir])
 
   const newThisMonth = useMemo(() => {
     const key = (d: string) => {
@@ -65,10 +81,29 @@ export function CustomersPage() {
   const current = Math.min(page, totalPages)
   const rows = filtered.slice((current - 1) * PAGE_SIZE, current * PAGE_SIZE)
 
-  function reset(fn: () => void) {
-    fn()
+  function toggleStatus(s: CustomerStatus) {
+    setSelected((prev) => {
+      const next = new Set(prev)
+      if (next.has(s)) next.delete(s)
+      else next.add(s)
+      return next
+    })
     setPage(1)
   }
+
+  function sortBy(key: SortKey) {
+    if (sortKey === key) setSortDir((d) => (d === "asc" ? "desc" : "asc"))
+    else {
+      setSortKey(key)
+      setSortDir("asc")
+    }
+  }
+
+  const statusLabel = allSelected
+    ? "All"
+    : selected.size === 0
+    ? "None"
+    : STATUSES.filter((s) => selected.has(s)).join(", ")
 
   return (
     <div className="bg-bg-page p-8">
@@ -95,27 +130,45 @@ export function CustomersPage() {
             <Search className="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-text-tertiary" />
             <Input
               value={query}
-              onChange={(e) => reset(() => setQuery(e.target.value))}
+              onChange={(e) => {
+                setQuery(e.target.value)
+                setPage(1)
+              }}
               placeholder="Search name, email or NRIC/FIN"
               className="pl-9"
             />
           </div>
-          <Select
-            value={status}
-            onValueChange={(v) => reset(() => setStatus(v as CustomerStatus | "all"))}
-          >
-            <SelectTrigger className="w-[360px] max-w-full">
-              <span className="flex gap-1 text-text-secondary">
-                Status: <SelectValue />
+
+          {/* Status multi-select */}
+          <DropdownMenu>
+            <DropdownMenuTrigger className="flex h-12 w-[360px] max-w-full items-center justify-between rounded-md border border-input bg-background px-3 text-sm outline-none focus-visible:ring-2 focus-visible:ring-ring">
+              <span className="truncate text-text-secondary">
+                Status: <span className="text-foreground">{statusLabel}</span>
               </span>
-            </SelectTrigger>
-            <SelectContent>
-              <SelectItem value="all">All</SelectItem>
-              <SelectItem value="Active">Active</SelectItem>
-              <SelectItem value="Deactivated">Deactivated</SelectItem>
-              <SelectItem value="Disabled">Disabled</SelectItem>
-            </SelectContent>
-          </Select>
+              <ChevronDown className="h-4 w-4 shrink-0 opacity-60" />
+            </DropdownMenuTrigger>
+            <DropdownMenuContent
+              align="start"
+              className="w-[360px] max-w-[calc(100vw-2rem)] p-2"
+            >
+              {STATUSES.map((s) => (
+                <DropdownMenuItem
+                  key={s}
+                  onSelect={(e) => {
+                    e.preventDefault()
+                    toggleStatus(s)
+                  }}
+                  className="gap-3 px-2 py-2.5"
+                >
+                  <CheckboxSquare checked={selected.has(s)} className="h-5 w-5 shrink-0" />
+                  <span className={cn("text-sm", selected.has(s) ? "font-medium text-primary" : "text-foreground")}>
+                    {s}
+                  </span>
+                </DropdownMenuItem>
+              ))}
+            </DropdownMenuContent>
+          </DropdownMenu>
+
           <Button
             variant="outline"
             className="ml-auto h-12 border-primary text-primary hover:bg-info-bg"
@@ -136,8 +189,18 @@ export function CustomersPage() {
                   <Th>NRIC/FIN</Th>
                   <Th>Mobile no.</Th>
                   <Th>Status</Th>
-                  <Th sortable>Creation Date</Th>
-                  <Th>Last Login (SGT)</Th>
+                  <Th
+                    sort={sortKey === "creationDate" ? sortDir : null}
+                    onSort={() => sortBy("creationDate")}
+                  >
+                    Creation Date
+                  </Th>
+                  <Th
+                    sort={sortKey === "lastLogin" ? sortDir : null}
+                    onSort={() => sortBy("lastLogin")}
+                  >
+                    Last Login (SGT)
+                  </Th>
                   <Th>Action</Th>
                 </tr>
               </thead>
@@ -205,7 +268,8 @@ export function CustomersPage() {
             </table>
           </div>
 
-          <div className="flex items-center justify-between p-4">
+          {/* Footer */}
+          <div className="flex items-center justify-between border-t border-border p-4">
             <p className="text-sm text-text-tertiary">
               {filtered.length === 0
                 ? "No results"
@@ -222,13 +286,29 @@ export function CustomersPage() {
   )
 }
 
-function Th({ children, sortable }: { children: React.ReactNode; sortable?: boolean }) {
+function Th({
+  children,
+  sort,
+  onSort,
+}: {
+  children: React.ReactNode
+  sort?: SortDir | null
+  onSort?: () => void
+}) {
   return (
     <th className="whitespace-nowrap px-3 py-3 text-sm font-medium text-text-tertiary">
-      <span className={cn("inline-flex items-center gap-1", sortable && "cursor-pointer")}>
-        {children}
-        {sortable && <ChevronsUpDown className="h-3.5 w-3.5" />}
-      </span>
+      {onSort ? (
+        <button
+          type="button"
+          onClick={onSort}
+          className="inline-flex items-center gap-1.5 text-text-tertiary hover:text-text-secondary"
+        >
+          {children}
+          <SortIcon dir={sort} className="h-4 w-3" />
+        </button>
+      ) : (
+        children
+      )}
     </th>
   )
 }
@@ -242,7 +322,13 @@ export function Pagination({
   totalPages: number
   onChange: (p: number) => void
 }) {
-  const pages = Array.from({ length: Math.min(totalPages, 7) }, (_, i) => i + 1)
+  // Show a window of up to 7 page buttons around the current page.
+  const window = 7
+  let start = Math.max(1, page - Math.floor(window / 2))
+  const end = Math.min(totalPages, start + window - 1)
+  start = Math.max(1, end - window + 1)
+  const pages = Array.from({ length: end - start + 1 }, (_, i) => start + i)
+
   return (
     <div className="flex items-center gap-1.5">
       <button
