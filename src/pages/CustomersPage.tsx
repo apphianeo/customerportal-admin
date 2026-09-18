@@ -18,9 +18,12 @@ import {
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu"
 import { CheckboxSquare, SortIcon } from "@/components/icons"
+import { ConfirmStatusDialog } from "@/components/ConfirmStatusDialog"
+import { Toast } from "@/components/Toast"
 import {
   customers as ALL,
   STATUS_TONE,
+  type Customer,
   type CustomerStatus,
 } from "@/data/customers"
 import { cn } from "@/lib/utils"
@@ -45,13 +48,18 @@ export function CustomersPage() {
   const [page, setPage] = useState(1)
   const [sortKey, setSortKey] = useState<SortKey | null>(null)
   const [sortDir, setSortDir] = useState<SortDir>("asc")
+  // Local status changes made from the table, keyed by customer id.
+  const [overrides, setOverrides] = useState<Record<string, CustomerStatus>>({})
+  const [dialog, setDialog] = useState<{ customer: Customer; action: "deactivate" | "activate" } | null>(null)
+  const [toast, setToast] = useState<string | null>(null)
 
+  const statusOf = (c: Customer): CustomerStatus => overrides[c.id] ?? c.status
   const allSelected = selected.size === STATUSES.length
 
   const filtered = useMemo(() => {
     const q = query.trim().toLowerCase()
     const rows = ALL.filter((c) => {
-      if (!allSelected && !selected.has(c.status)) return false
+      if (!allSelected && !selected.has(overrides[c.id] ?? c.status)) return false
       if (!q) return true
       return (
         c.fullName.toLowerCase().includes(q) ||
@@ -66,7 +74,7 @@ export function CustomersPage() {
       })
     }
     return rows
-  }, [query, selected, allSelected, sortKey, sortDir])
+  }, [query, selected, allSelected, sortKey, sortDir, overrides])
 
   const newThisMonth = useMemo(() => {
     const key = (d: string) => {
@@ -99,6 +107,18 @@ export function CustomersPage() {
     }
   }
 
+  function confirmDialog() {
+    if (!dialog) return
+    const next: CustomerStatus = dialog.action === "deactivate" ? "Deactivated" : "Active"
+    setOverrides((prev) => ({ ...prev, [dialog.customer.id]: next }))
+    setToast(
+      `${dialog.customer.loginId} has been ${
+        dialog.action === "deactivate" ? "deactivated" : "activated"
+      }.`
+    )
+    setDialog(null)
+  }
+
   const statusLabel = allSelected
     ? "All"
     : selected.size === 0
@@ -107,6 +127,8 @@ export function CustomersPage() {
 
   return (
     <div className="bg-bg-page p-8">
+      {toast && <Toast message={toast} onClose={() => setToast(null)} />}
+
       <div className="mx-auto flex w-full max-w-[1200px] flex-col gap-8">
         <h1 className="text-[32px] font-semibold leading-[1.2] text-foreground">
           Customers
@@ -139,8 +161,8 @@ export function CustomersPage() {
             />
           </div>
 
-          {/* Status multi-select */}
-          <DropdownMenu>
+          {/* Status multi-select (non-modal so opening it doesn't shift the page) */}
+          <DropdownMenu modal={false}>
             <DropdownMenuTrigger className="flex h-12 w-[360px] max-w-full items-center justify-between rounded-md border border-input bg-background px-3 text-sm outline-none focus-visible:ring-2 focus-visible:ring-ring">
               <span className="truncate text-text-secondary">
                 Status: <span className="text-foreground">{statusLabel}</span>
@@ -211,59 +233,73 @@ export function CustomersPage() {
                   >
                     Last Login (SGT)
                   </Th>
-                  <Th>Action</Th>
+                  {/* Action stays anchored to the right on narrow viewports */}
+                  <th className="sticky right-0 z-10 whitespace-nowrap border-l border-border bg-muted px-3 py-3 text-sm font-medium text-text-tertiary">
+                    Action
+                  </th>
                 </tr>
               </thead>
               <tbody>
-                {rows.map((c) => (
-                  <tr
-                    key={c.id}
-                    onClick={() => navigate(`/customers/${c.id}`)}
-                    className="cursor-pointer border-b border-border last:border-0 hover:bg-muted/60"
-                  >
-                    <td className="truncate px-3 py-3 text-sm text-text-secondary">
-                      {c.loginId}
-                    </td>
-                    <td className="truncate px-3 py-3 text-sm text-foreground">
-                      {c.fullName}
-                    </td>
-                    <td className="truncate px-3 py-3 text-sm text-text-secondary">{c.nric}</td>
-                    <td className="truncate px-3 py-3 text-sm text-text-secondary">
-                      {c.mobile}
-                    </td>
-                    <td className="px-3 py-3">
-                      <Badge tone={STATUS_TONE[c.status]}>{c.status}</Badge>
-                    </td>
-                    <td className="truncate px-3 py-3 text-sm text-text-secondary">
-                      {c.creationDate}
-                    </td>
-                    <td className="truncate px-3 py-3 text-sm text-text-secondary">
-                      {c.lastLogin}
-                    </td>
-                    <td className="px-3 py-3" onClick={(e) => e.stopPropagation()}>
-                      <DropdownMenu>
-                        <DropdownMenuTrigger className="grid size-8 place-items-center rounded-md text-text-tertiary outline-none hover:bg-muted focus-visible:ring-2 focus-visible:ring-ring">
-                          <MoreHorizontal className="h-4 w-4" />
-                        </DropdownMenuTrigger>
-                        <DropdownMenuContent align="end">
-                          <DropdownMenuItem onSelect={() => navigate(`/customers/${c.id}`)}>
-                            View details
-                          </DropdownMenuItem>
-                          <DropdownMenuItem
-                            className={cn(
-                              c.status === "Active"
-                                ? "text-destructive focus:bg-destructive-bg"
-                                : "text-success focus:bg-success-bg"
+                {rows.map((c) => {
+                  const status = statusOf(c)
+                  return (
+                    <tr
+                      key={c.id}
+                      onClick={() => navigate(`/customers/${c.id}`)}
+                      className="group cursor-pointer border-b border-border last:border-0 hover:bg-muted/60"
+                    >
+                      <td className="truncate px-3 py-3 text-sm text-text-secondary">
+                        {c.loginId}
+                      </td>
+                      <td className="truncate px-3 py-3 text-sm text-foreground">
+                        {c.fullName}
+                      </td>
+                      <td className="truncate px-3 py-3 text-sm text-text-secondary">{c.nric}</td>
+                      <td className="truncate px-3 py-3 text-sm text-text-secondary">
+                        {c.mobile}
+                      </td>
+                      <td className="px-3 py-3">
+                        <Badge tone={STATUS_TONE[status]}>{status}</Badge>
+                      </td>
+                      <td className="truncate px-3 py-3 text-sm text-text-secondary">
+                        {c.creationDate}
+                      </td>
+                      <td className="truncate px-3 py-3 text-sm text-text-secondary">
+                        {c.lastLogin}
+                      </td>
+                      <td
+                        className="sticky right-0 border-l border-border bg-white px-3 py-3 group-hover:bg-[#f7f9fb]"
+                        onClick={(e) => e.stopPropagation()}
+                      >
+                        <DropdownMenu modal={false}>
+                          <DropdownMenuTrigger className="grid size-8 place-items-center rounded-md text-text-tertiary outline-none hover:bg-muted focus-visible:ring-2 focus-visible:ring-ring">
+                            <MoreHorizontal className="h-4 w-4" />
+                          </DropdownMenuTrigger>
+                          <DropdownMenuContent align="end">
+                            <DropdownMenuItem onSelect={() => navigate(`/customers/${c.id}`)}>
+                              View details
+                            </DropdownMenuItem>
+                            {status === "Active" ? (
+                              <DropdownMenuItem
+                                className="text-destructive focus:bg-destructive-bg"
+                                onSelect={() => setDialog({ customer: c, action: "deactivate" })}
+                              >
+                                Deactivate account
+                              </DropdownMenuItem>
+                            ) : (
+                              <DropdownMenuItem
+                                className="text-success focus:bg-success-bg"
+                                onSelect={() => setDialog({ customer: c, action: "activate" })}
+                              >
+                                Activate account
+                              </DropdownMenuItem>
                             )}
-                            onSelect={() => navigate(`/customers/${c.id}`)}
-                          >
-                            {c.status === "Active" ? "Deactivate account" : "Activate account"}
-                          </DropdownMenuItem>
-                        </DropdownMenuContent>
-                      </DropdownMenu>
-                    </td>
-                  </tr>
-                ))}
+                          </DropdownMenuContent>
+                        </DropdownMenu>
+                      </td>
+                    </tr>
+                  )
+                })}
                 {rows.length === 0 && (
                   <tr>
                     <td
@@ -293,6 +329,14 @@ export function CustomersPage() {
           </div>
         </div>
       </div>
+
+      <ConfirmStatusDialog
+        open={dialog !== null}
+        onOpenChange={(o) => !o && setDialog(null)}
+        action={dialog?.action ?? "deactivate"}
+        email={dialog?.customer.loginId ?? ""}
+        onConfirm={confirmDialog}
+      />
     </div>
   )
 }
