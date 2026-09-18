@@ -2,21 +2,14 @@ import { useState } from "react"
 import { Link, useParams } from "react-router-dom"
 import { ChevronRight, CircleCheck, CircleX } from "lucide-react"
 import { Badge } from "@/components/ui/badge"
-import { Button } from "@/components/ui/button"
-import {
-  Dialog,
-  DialogContent,
-  DialogDescription,
-  DialogFooter,
-  DialogHeader,
-  DialogTitle,
-} from "@/components/ui/dialog"
+import { ConfirmStatusDialog } from "@/components/ConfirmStatusDialog"
+import { Toast } from "@/components/Toast"
 import {
   getCustomer,
   STATUS_TONE,
   type CustomerStatus,
 } from "@/data/customers"
-import successCircle from "@/assets/icons/success-circle.svg"
+import { cn } from "@/lib/utils"
 
 function Field({ label, value }: { label: string; value: string }) {
   return (
@@ -33,7 +26,7 @@ export function CustomerDetailPage() {
 
   const [status, setStatus] = useState<CustomerStatus>(customer?.status ?? "Active")
   const [dialogOpen, setDialogOpen] = useState(false)
-  const [banner, setBanner] = useState<string | null>(null)
+  const [toast, setToast] = useState<string | null>(null)
 
   if (!customer) {
     return (
@@ -54,10 +47,8 @@ export function CustomerDetailPage() {
     const next: CustomerStatus = isActive ? "Deactivated" : "Active"
     setStatus(next)
     setDialogOpen(false)
-    setBanner(
-      next === "Active"
-        ? `${customer!.fullName}'s account has been activated.`
-        : `${customer!.fullName}'s account has been deactivated.`
+    setToast(
+      `${customer!.loginId} has been ${next === "Active" ? "activated" : "deactivated"}.`
     )
   }
 
@@ -77,6 +68,8 @@ export function CustomerDetailPage() {
 
   return (
     <div className="bg-bg-page p-8">
+      {toast && <Toast message={toast} onClose={() => setToast(null)} />}
+
       <div className="mx-auto flex w-full max-w-[1200px] flex-col gap-8">
         {/* Breadcrumb */}
         <nav className="flex items-center gap-1 text-xs">
@@ -94,13 +87,6 @@ export function CustomerDetailPage() {
           </h1>
           <Badge tone={STATUS_TONE[status]}>{status}</Badge>
         </div>
-
-        {banner && (
-          <div className="flex items-start gap-2 rounded-md bg-success-bg px-4 py-3">
-            <img src={successCircle} alt="" className="mt-0.5 h-4 w-4 shrink-0" />
-            <p className="text-sm leading-[1.5] text-success">{banner}</p>
-          </div>
-        )}
 
         {/* Customer Profile */}
         <section className="overflow-hidden rounded-[12px] border border-border bg-white shadow-[0px_1px_4px_0px_rgba(0,0,0,0.05)]">
@@ -175,11 +161,15 @@ export function CustomerDetailPage() {
           </div>
         </section>
 
+        {/* Status action — plain text button, no hover fill */}
         <div className="border-t border-border pt-6">
-          <Button
-            variant={isActive ? "danger" : "ghost"}
-            className={isActive ? "" : "text-success hover:bg-success-bg"}
+          <button
+            type="button"
             onClick={() => setDialogOpen(true)}
+            className={cn(
+              "inline-flex items-center gap-2 bg-transparent text-base font-medium",
+              isActive ? "text-destructive" : "text-success"
+            )}
           >
             {isActive ? (
               <CircleX className="h-5 w-5" />
@@ -187,50 +177,17 @@ export function CustomerDetailPage() {
               <CircleCheck className="h-5 w-5" />
             )}
             {isActive ? "Deactivate account" : "Activate account"}
-          </Button>
+          </button>
         </div>
       </div>
 
-      {/* Confirmation dialog */}
-      <Dialog open={dialogOpen} onOpenChange={setDialogOpen}>
-        <DialogContent className="max-w-md">
-          <DialogHeader>
-            <DialogTitle>
-              {isActive ? "Deactivate account?" : "Activate account?"}
-            </DialogTitle>
-            <DialogDescription>
-              {isActive ? (
-                <>
-                  <span className="font-medium text-foreground">
-                    {customer.fullName}
-                  </span>{" "}
-                  will lose access to the Customer Portal and will not be able to
-                  sign in until the account is reactivated.
-                </>
-              ) : (
-                <>
-                  <span className="font-medium text-foreground">
-                    {customer.fullName}
-                  </span>{" "}
-                  will regain access to the Customer Portal and be able to sign in
-                  again.
-                </>
-              )}
-            </DialogDescription>
-          </DialogHeader>
-          <DialogFooter>
-            <Button variant="outline" onClick={() => setDialogOpen(false)}>
-              Cancel
-            </Button>
-            <Button
-              variant={isActive ? "destructive" : "default"}
-              onClick={confirmToggle}
-            >
-              {isActive ? "Deactivate" : "Activate"}
-            </Button>
-          </DialogFooter>
-        </DialogContent>
-      </Dialog>
+      <ConfirmStatusDialog
+        open={dialogOpen}
+        onOpenChange={setDialogOpen}
+        action={isActive ? "deactivate" : "activate"}
+        email={customer.loginId}
+        onConfirm={confirmToggle}
+      />
     </div>
   )
 }

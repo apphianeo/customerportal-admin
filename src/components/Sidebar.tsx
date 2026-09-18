@@ -21,12 +21,12 @@ export function Sidebar({
   return (
     <aside
       className={cn(
-        "sticky top-0 flex h-screen shrink-0 flex-col gap-6 border-r border-border bg-white px-4 py-6 shadow-[0px_1px_2px_rgba(0,0,0,0.05)] transition-all duration-200",
-        collapsed ? "w-[80px]" : "w-[240px]"
+        "sticky top-0 flex h-screen shrink-0 flex-col border-r border-border bg-white px-4 py-6 shadow-[0px_1px_2px_rgba(0,0,0,0.05)] transition-all duration-200",
+        collapsed ? "w-[80px] items-center gap-4" : "w-[240px] gap-6"
       )}
     >
       {collapsed ? (
-        <div className="flex flex-col items-start gap-4">
+        <>
           <button
             type="button"
             onClick={() => navigate("/customers")}
@@ -43,7 +43,7 @@ export function Sidebar({
           >
             <PanelLeft className="h-[18px] w-[18px]" />
           </button>
-        </div>
+        </>
       ) : (
         <div className="flex items-center justify-between px-1">
           <button
@@ -65,7 +65,7 @@ export function Sidebar({
         </div>
       )}
 
-      <nav className="flex flex-col gap-3">
+      <nav className={cn("flex flex-col gap-3", collapsed ? "w-full" : "")}>
         {NAV.map(({ to, label, icon: Icon }) => (
           <NavLink
             key={to}
