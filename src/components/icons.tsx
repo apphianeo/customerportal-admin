@@ -15,3 +15,52 @@ export function ActivityLogIcon({ className }: { className?: string }) {
     </svg>
   )
 }
+
+// Stacked up/down triangles for sortable table headers. `dir` highlights the
+// active direction; the inactive triangle stays muted.
+export function SortIcon({
+  dir,
+  className,
+}: {
+  dir?: "asc" | "desc" | null
+  className?: string
+}) {
+  const active = "currentColor"
+  const muted = "#C9CED6"
+  return (
+    <svg viewBox="0 0 12 16" className={className} aria-hidden="true">
+      <path d="M6 2.5 9 6.5H3L6 2.5Z" fill={dir === "asc" ? active : muted} />
+      <path d="M6 13.5 9 9.5H3L6 13.5Z" fill={dir === "desc" ? active : muted} />
+    </svg>
+  )
+}
+
+// Filled checkbox square used by the status filter (matches the Figma dropdown).
+export function CheckboxSquare({
+  checked,
+  className,
+}: {
+  checked: boolean
+  className?: string
+}) {
+  if (checked) {
+    return (
+      <svg viewBox="0 0 20 20" className={className} aria-hidden="true">
+        <rect width="20" height="20" rx="4" fill="hsl(var(--primary))" />
+        <path
+          d="M5.5 10.2 8.5 13l6-6.5"
+          fill="none"
+          stroke="#fff"
+          strokeWidth="1.8"
+          strokeLinecap="round"
+          strokeLinejoin="round"
+        />
+      </svg>
+    )
+  }
+  return (
+    <svg viewBox="0 0 20 20" className={className} aria-hidden="true">
+      <rect x="0.75" y="0.75" width="18.5" height="18.5" rx="3.25" fill="#fff" stroke="#C9CED6" strokeWidth="1.5" />
+    </svg>
+  )
+}

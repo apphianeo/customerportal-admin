@@ -1,7 +1,8 @@
 import { useMemo, useState } from "react"
-import { ChevronsUpDown, Download, Search } from "lucide-react"
+import { Download, Search } from "lucide-react"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
+import { SortIcon } from "@/components/icons"
 import { Pagination } from "./CustomersPage"
 import { activityLog as ALL } from "@/data/activity"
 import { cn } from "@/lib/utils"
@@ -15,22 +16,36 @@ const RED_ACTIONS = new Set([
   "Reset password",
 ])
 
+function toTime(d: string): number {
+  const [datePart, timePart] = d.split(", ")
+  const [dd, mm, yy] = datePart.split("/").map(Number)
+  let h = 0, mi = 0, s = 0
+  if (timePart) [h, mi, s] = timePart.split(":").map(Number)
+  return new Date(yy, mm - 1, dd, h, mi, s).getTime()
+}
+
 export function ActivityLogPage() {
   const [query, setQuery] = useState("")
   const [page, setPage] = useState(1)
+  const [sortDir, setSortDir] = useState<"asc" | "desc">("desc")
 
   const filtered = useMemo(() => {
     const q = query.trim().toLowerCase()
-    if (!q) return ALL
-    return ALL.filter(
+    const rows = ALL.filter(
       (e) =>
+        !q ||
         e.activity.toLowerCase().includes(q) ||
         e.customerName.toLowerCase().includes(q) ||
         e.customerNric.toLowerCase().includes(q) ||
         e.admin.name.toLowerCase().includes(q) ||
         e.admin.email.toLowerCase().includes(q)
     )
-  }, [query])
+    rows.sort((a, b) => {
+      const diff = toTime(a.timestamp) - toTime(b.timestamp)
+      return sortDir === "asc" ? diff : -diff
+    })
+    return rows
+  }, [query, sortDir])
 
   const totalPages = Math.max(1, Math.ceil(filtered.length / PAGE_SIZE))
   const current = Math.min(page, totalPages)
@@ -73,10 +88,14 @@ export function ActivityLogPage() {
               <thead>
                 <tr className="border-b border-border bg-muted">
                   <th className="whitespace-nowrap px-4 py-3 text-sm font-medium text-text-tertiary">
-                    <span className="inline-flex cursor-pointer items-center gap-1">
+                    <button
+                      type="button"
+                      onClick={() => setSortDir((d) => (d === "asc" ? "desc" : "asc"))}
+                      className="inline-flex items-center gap-1.5 text-text-tertiary hover:text-text-secondary"
+                    >
                       Timestamp (SGT)
-                      <ChevronsUpDown className="h-3.5 w-3.5" />
-                    </span>
+                      <SortIcon dir={sortDir} className="h-4 w-3" />
+                    </button>
                   </th>
                   <th className="px-4 py-3 text-sm font-medium text-text-tertiary">Activity</th>
                   <th className="px-4 py-3 text-sm font-medium text-text-tertiary">Customer</th>
@@ -129,7 +148,8 @@ export function ActivityLogPage() {
             </table>
           </div>
 
-          <div className="flex items-center justify-between p-4">
+          {/* Footer */}
+          <div className="flex items-center justify-between border-t border-border p-4">
             <p className="text-sm text-text-tertiary">
               {filtered.length === 0
                 ? "No results"

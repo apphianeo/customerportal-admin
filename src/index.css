@@ -73,6 +73,11 @@
   * {
     @apply border-border;
   }
+  /* Reserve space for the scrollbar so the centered content doesn't shift
+     horizontally when the page height changes (e.g. filtering the table). */
+  html {
+    scrollbar-gutter: stable;
+  }
   body {
     @apply bg-background text-foreground font-sans antialiased;
     font-feature-settings: "rlig" 1, "calt" 1;

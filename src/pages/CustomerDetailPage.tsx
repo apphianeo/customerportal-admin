@@ -149,7 +149,7 @@ export function CustomerDetailPage() {
                   ))}
                 </tbody>
               </table>
-              <div className="px-4 py-3">
+              <div className="border-t border-border px-4 py-3">
                 <p className="text-sm text-text-tertiary">
                   Showing 1-{customer.accountActivity.length} of{" "}
                   {customer.accountActivity.length}
