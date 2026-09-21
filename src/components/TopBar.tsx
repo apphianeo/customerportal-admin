@@ -22,7 +22,7 @@ export function TopBar() {
 
   return (
     <header className="sticky top-0 z-10 flex h-[62px] items-center justify-end border-b border-border bg-white px-6">
-      <DropdownMenu>
+      <DropdownMenu modal={false}>
         <DropdownMenuTrigger className="flex items-center gap-2.5 rounded-md outline-none focus-visible:ring-2 focus-visible:ring-ring">
           <span className="grid size-8 place-items-center rounded-lg bg-info-bg text-sm font-medium text-foreground">
             {initials(currentAdmin.name)}
