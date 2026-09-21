@@ -1,11 +1,9 @@
 import { useNavigate } from "react-router-dom"
-import { ChevronDown, LogOut, UserCog } from "lucide-react"
+import { ChevronDown, LogOut } from "lucide-react"
 import {
   DropdownMenu,
   DropdownMenuContent,
   DropdownMenuItem,
-  DropdownMenuLabel,
-  DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu"
 import { currentAdmin } from "@/data/activity"
@@ -37,18 +35,12 @@ export function TopBar() {
           </span>
           <ChevronDown className="h-4 w-4 text-text-tertiary" />
         </DropdownMenuTrigger>
-        <DropdownMenuContent align="end" className="w-56">
-          <DropdownMenuLabel>{currentAdmin.email}</DropdownMenuLabel>
-          <DropdownMenuSeparator />
-          <DropdownMenuItem>
-            <UserCog className="text-text-secondary" />
-            Account settings
-          </DropdownMenuItem>
+        <DropdownMenuContent align="end" className="w-[200px]">
           <DropdownMenuItem
-            className="text-destructive focus:bg-destructive-bg"
+            className="text-[#dc2626] focus:bg-muted focus:text-[#dc2626]"
             onSelect={() => navigate("/")}
           >
-            <LogOut />
+            <LogOut className="text-[#dc2626]" />
             Sign out
           </DropdownMenuItem>
         </DropdownMenuContent>
