@@ -1,5 +1,5 @@
 import { useNavigate } from "react-router-dom"
-import { ChevronDown, LogOut } from "lucide-react"
+import { ChevronDown } from "lucide-react"
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -35,12 +35,14 @@ export function TopBar() {
           </span>
           <ChevronDown className="h-4 w-4 text-text-tertiary" />
         </DropdownMenuTrigger>
-        <DropdownMenuContent align="end" className="w-[200px]">
+        <DropdownMenuContent
+          align="end"
+          className="w-[200px] p-[12px] shadow-[0px_10px_35px_0px_rgba(0,94,184,0.06)]"
+        >
           <DropdownMenuItem
-            className="text-[#dc2626] focus:bg-muted focus:text-[#dc2626]"
+            className="rounded-[8px] p-[8px] text-[14px] font-normal leading-[1.5] text-[#dc2626] focus:bg-[#f6f6f6] focus:text-[#dc2626]"
             onSelect={() => navigate("/")}
           >
-            <LogOut className="text-[#dc2626]" />
             Sign out
           </DropdownMenuItem>
         </DropdownMenuContent>
