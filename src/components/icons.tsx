@@ -8,6 +8,21 @@ export function CustomersIcon({ className }: { className?: string }) {
   )
 }
 
+// Activity feed (dots + lines) — distinguishes the customer activity list
+// from the admin clock icon.
+export function CustomerActivityIcon({ className }: { className?: string }) {
+  return (
+    <svg viewBox="0 0 24 24" fill="currentColor" className={className} aria-hidden="true">
+      <circle cx="5" cy="6" r="1.6" />
+      <rect x="9" y="5" width="11" height="2" rx="1" />
+      <circle cx="5" cy="12" r="1.6" />
+      <rect x="9" y="11" width="11" height="2" rx="1" />
+      <circle cx="5" cy="18" r="1.6" />
+      <rect x="9" y="17" width="11" height="2" rx="1" />
+    </svg>
+  )
+}
+
 export function ActivityLogIcon({ className }: { className?: string }) {
   return (
     <svg viewBox="0 0 24 24" fill="currentColor" className={className} aria-hidden="true">

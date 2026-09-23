@@ -4,6 +4,7 @@ import { LoginPage } from "@/pages/LoginPage"
 import { OutlookAuthPage } from "@/pages/OutlookAuthPage"
 import { CustomersPage } from "@/pages/CustomersPage"
 import { CustomerDetailPage } from "@/pages/CustomerDetailPage"
+import { CustomerActivityPage } from "@/pages/CustomerActivityPage"
 import { ActivityLogPage } from "@/pages/ActivityLogPage"
 
 export const router = createBrowserRouter([
@@ -14,7 +15,8 @@ export const router = createBrowserRouter([
     children: [
       { path: "/customers", element: <CustomersPage /> },
       { path: "/customers/:id", element: <CustomerDetailPage /> },
-      { path: "/activity-log", element: <ActivityLogPage /> },
+      { path: "/customer-activity", element: <CustomerActivityPage /> },
+      { path: "/admin-activity", element: <ActivityLogPage /> },
     ],
   },
 ])
