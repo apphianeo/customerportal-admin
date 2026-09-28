@@ -1,5 +1,6 @@
-// Global activity log — actions taken by UOI admin staff against customer
-// accounts. Mirrors the Figma "Activity Log" screen.
+// Admin Activity — audit trail of actions taken by UOI admin staff.
+// Matches the "Activity Log › Admin Activity" tab in Figma: the affected
+// party is embedded in the action string (spec B), no separate customer column.
 
 export type AdminRole = "Master Admin" | "UOI Admin"
 
@@ -9,13 +10,12 @@ export interface Admin {
   role: AdminRole
 }
 
-export interface ActivityLogEntry {
+export interface AdminActivityEntry {
   id: string
   timestamp: string // "DD/MM/YYYY, HH:mm:ss" (SGT)
-  activity: string
-  customerName: string
-  customerNric: string
   admin: Admin
+  action: string // e.g. "Deactivated rachel.seah@example.com"
+  target?: string // the substring (email / name) to highlight as a link
 }
 
 export const ADMINS: Record<string, Admin> = {
@@ -26,28 +26,26 @@ export const ADMINS: Record<string, Admin> = {
   sophie: { name: "Sophie Tan", email: "sophie.tan@uoi.com.sg", role: "UOI Admin" },
 }
 
-export const activityLog: ActivityLogEntry[] = [
-  { id: "1", timestamp: "14/09/2026, 16:42:40", activity: "Deactivated account", customerName: "Tiffany Chew Xin Hui", customerNric: "S9942073B", admin: ADMINS.priya },
-  { id: "2", timestamp: "14/09/2026, 15:18:00", activity: "Updated profile", customerName: "Samuel Yap Jun Wei", customerNric: "S8314692J", admin: ADMINS.marcus },
-  { id: "3", timestamp: "14/09/2026, 13:56:12", activity: "Reset password", customerName: "Rachel Seah Hui Ting", customerNric: "S9037186H", admin: ADMINS.aisha },
-  { id: "4", timestamp: "14/09/2026, 11:27:52", activity: "Changed email address", customerName: "Quentin Loh Yi Xuan", customerNric: "S9846201F", admin: ADMINS.daniel },
-  { id: "5", timestamp: "14/09/2026, 09:04:40", activity: "Updated marketing consent", customerName: "Priya Sharma", customerNric: "G1092845P", admin: ADMINS.sophie },
-  { id: "6", timestamp: "13/09/2026, 17:39:28", activity: "Activated account", customerName: "Olivia Wong Shi Min", customerNric: "S9413572C", admin: ADMINS.priya },
-  { id: "7", timestamp: "13/09/2026, 14:22:24", activity: "Reset password", customerName: "Nathan Chua Wei Jie", customerNric: "S8126784L", admin: ADMINS.marcus },
-  { id: "8", timestamp: "13/09/2026, 10:48:44", activity: "Verified customer details", customerName: "Mei Lin", customerNric: "G1729348N", admin: ADMINS.aisha },
-  { id: "9", timestamp: "12/09/2026, 16:11:48", activity: "Updated mobile number", customerName: "Lucas Teo Ming Jie", customerNric: "S8912467I", admin: ADMINS.daniel },
-  { id: "10", timestamp: "12/09/2026, 12:35:36", activity: "Updated profile", customerName: "Kavya Nair", customerNric: "S9231058G", admin: ADMINS.sophie },
-  { id: "11", timestamp: "12/09/2026, 08:57:20", activity: "Reset password", customerName: "Jeremy Goh Zhi Hao", customerNric: "S8437619E", admin: ADMINS.priya },
-  { id: "12", timestamp: "11/09/2026, 18:03:04", activity: "Deactivated account", customerName: "Isabelle Lee Jia En", customerNric: "S9754102D", admin: ADMINS.marcus },
-  { id: "13", timestamp: "11/09/2026, 15:46:36", activity: "Changed login ID", customerName: "Haruto Sato", customerNric: "G1582037K", admin: ADMINS.aisha },
-  { id: "14", timestamp: "11/09/2026, 11:09:12", activity: "Updated profile", customerName: "Grace Koh Hui Min", customerNric: "S9345821B", admin: ADMINS.daniel },
-  { id: "15", timestamp: "10/09/2026, 17:52:48", activity: "Disabled account", customerName: "Farhan Rahman", customerNric: "S8872314J", admin: ADMINS.priya },
-  { id: "16", timestamp: "10/09/2026, 14:31:20", activity: "Verified customer details", customerName: "Elena Fernandez", customerNric: "G1298456M", admin: ADMINS.sophie },
-  { id: "17", timestamp: "10/09/2026, 10:18:56", activity: "Updated marketing consent", customerName: "Daniel Ong Kai Wen", customerNric: "S8239045H", admin: ADMINS.marcus },
-  { id: "18", timestamp: "09/09/2026, 16:44:32", activity: "Reset password", customerName: "Chloe Ng Jia Yi", customerNric: "S9528314A", admin: ADMINS.aisha },
-  { id: "19", timestamp: "09/09/2026, 12:07:08", activity: "Changed email address", customerName: "Samuel Yap Jun Wei", customerNric: "S8314692J", admin: ADMINS.daniel },
-  { id: "20", timestamp: "09/09/2026, 09:33:44", activity: "Updated profile", customerName: "Tiffany Chew Xin Hui", customerNric: "S9942073B", admin: ADMINS.priya },
-]
-
 // The signed-in staff member (mock).
 export const currentAdmin: Admin = ADMINS.priya
+
+export const adminActivity: AdminActivityEntry[] = [
+  { id: "1", timestamp: "14/09/2026, 16:42:40", admin: ADMINS.priya, action: "Deactivated rachel.seah@example.com", target: "rachel.seah@example.com" },
+  { id: "2", timestamp: "14/09/2026, 15:18:00", admin: ADMINS.marcus, action: "Verified samuel.yap@example.com", target: "samuel.yap@example.com" },
+  { id: "3", timestamp: "14/09/2026, 13:56:12", admin: ADMINS.aisha, action: "Activated quentin.loh@example.com", target: "quentin.loh@example.com" },
+  { id: "4", timestamp: "14/09/2026, 11:27:52", admin: ADMINS.daniel, action: "Login" },
+  { id: "5", timestamp: "14/09/2026, 09:04:40", admin: ADMINS.sophie, action: "Verified priya.sharma@example.com", target: "priya.sharma@example.com" },
+  { id: "6", timestamp: "13/09/2026, 17:39:28", admin: ADMINS.priya, action: "Added Marcus Lee (UOI Admin)", target: "Marcus Lee" },
+  { id: "7", timestamp: "13/09/2026, 14:22:24", admin: ADMINS.marcus, action: "Logout" },
+  { id: "8", timestamp: "13/09/2026, 10:48:44", admin: ADMINS.aisha, action: "Deactivated nathan.chua@example.com", target: "nathan.chua@example.com" },
+  { id: "9", timestamp: "12/09/2026, 16:11:48", admin: ADMINS.priya, action: "Added Sophie Tan (UOI Admin)", target: "Sophie Tan" },
+  { id: "10", timestamp: "12/09/2026, 12:35:36", admin: ADMINS.daniel, action: "Activated olivia.wong@example.com", target: "olivia.wong@example.com" },
+  { id: "11", timestamp: "12/09/2026, 08:57:20", admin: ADMINS.sophie, action: "Login" },
+  { id: "12", timestamp: "11/09/2026, 18:03:04", admin: ADMINS.marcus, action: "Verified mei.lin@example.com", target: "mei.lin@example.com" },
+  { id: "13", timestamp: "11/09/2026, 15:46:36", admin: ADMINS.priya, action: "Deactivated isabelle.lee@example.com", target: "isabelle.lee@example.com" },
+  { id: "14", timestamp: "11/09/2026, 11:09:12", admin: ADMINS.aisha, action: "Logout" },
+  { id: "15", timestamp: "10/09/2026, 17:52:48", admin: ADMINS.daniel, action: "Activated farhan.rahman@example.com", target: "farhan.rahman@example.com" },
+  { id: "16", timestamp: "10/09/2026, 14:31:20", admin: ADMINS.priya, action: "Added Daniel Koh (UOI Admin)", target: "Daniel Koh" },
+  { id: "17", timestamp: "10/09/2026, 10:18:56", admin: ADMINS.marcus, action: "Verified chloe.ng@example.com", target: "chloe.ng@example.com" },
+  { id: "18", timestamp: "09/09/2026, 16:44:32", admin: ADMINS.sophie, action: "Login" },
+]

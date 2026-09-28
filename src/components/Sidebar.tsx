@@ -1,13 +1,12 @@
 import { NavLink, useNavigate } from "react-router-dom"
 import { PanelLeft } from "lucide-react"
 import { Logo } from "./Logo"
-import { CustomersIcon, CustomerActivityIcon, ActivityLogIcon } from "./icons"
+import { CustomersIcon, ActivityLogIcon } from "./icons"
 import { cn } from "@/lib/utils"
 
 const NAV = [
   { to: "/customers", label: "Customers", icon: CustomersIcon },
-  { to: "/customer-activity", label: "Customer Activity", icon: CustomerActivityIcon },
-  { to: "/admin-activity", label: "Admin Activity", icon: ActivityLogIcon },
+  { to: "/activity-log", label: "Activity Log", icon: ActivityLogIcon },
 ]
 
 export function Sidebar({

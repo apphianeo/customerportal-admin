@@ -1,73 +1,43 @@
-// Customer Activity overview — a global feed of customer-initiated events
-// across the portal (logins, downloads, self-service changes). Drills into a
-// single customer via the detail page. Swap for a real API later; the screens
-// only depend on the exported shape below.
+// Customer Activity — audit trail of customer-initiated actions.
+// Matches the "Activity Log › Customer Activity" tab in Figma: the customer is
+// identified by email + NRIC (linked to their detail), activities limited to
+// the spec-A set (login w/ mode, downloads, profile updates, etc.).
 
 import { customers } from "./customers"
-
-export type ActivityChannel = "Web" | "Mobile app"
 
 export interface CustomerActivityEntry {
   id: string
   timestamp: string // "DD/MM/YYYY, HH:mm:ss" (SGT)
-  activity: string
-  customerId: string
-  customerName: string
+  customerId?: string
+  customerEmail: string
   customerNric: string
-  channel: ActivityChannel
+  activity: string
 }
 
-// Failed / security-relevant events surface a red dot; routine actions green.
-export const CUSTOMER_RED_ACTIONS = new Set(["Login failed", "Account locked"])
+// Resolve a customer id by email so rows can deep-link to the detail page.
+const idByEmail = new Map(customers.map((c) => [c.loginId, c.id]))
+const link = (email: string) => idByEmail.get(email)
 
-const ACTIVITIES = [
-  "Login",
-  "Viewed dashboard",
-  "Viewed policy details",
-  "Downloaded Policy Schedule",
-  "Downloaded Claim Summary",
-  "Made a payment",
-  "Submitted a claim",
-  "Updated contact details",
-  "Updated marketing consent",
-  "Requested password reset",
-  "Login failed",
-  "Account locked",
-  "Log Out",
-]
-
-const CHANNELS: ActivityChannel[] = ["Web", "Mobile app"]
-
-const pad = (n: number) => String(n).padStart(2, "0")
-
-function fmt(d: Date): string {
-  return (
-    `${pad(d.getDate())}/${pad(d.getMonth() + 1)}/${d.getFullYear()}, ` +
-    `${pad(d.getHours())}:${pad(d.getMinutes())}:${pad(d.getSeconds())}`
-  )
-}
-
-// Deterministic generator so the feed is stable across reloads.
-function generate(count: number): CustomerActivityEntry[] {
-  const pool = customers.slice(0, 16)
-  const out: CustomerActivityEntry[] = []
-  let t = new Date(2026, 8, 14, 16, 42, 40).getTime() // 14/09/2026 16:42:40
-
-  for (let i = 0; i < count; i++) {
-    const c = pool[(i * 3) % pool.length]
-    out.push({
-      id: String(i + 1),
-      timestamp: fmt(new Date(t)),
-      activity: ACTIVITIES[(i * 5) % ACTIVITIES.length],
-      customerId: c.id,
-      customerName: c.fullName,
-      customerNric: c.nric,
-      channel: CHANNELS[i % 2],
-    })
-    // Step back a deterministic, uneven amount so timestamps look organic.
-    t -= (7 + ((i * 37) % 53)) * 60_000 + ((i * 13) % 60) * 1_000
-  }
-  return out
-}
-
-export const customerActivity: CustomerActivityEntry[] = generate(64)
+export const customerActivity: CustomerActivityEntry[] = [
+  ["14/09/2026, 16:42:40", "tiffany.chew@example.com", "S9942073B", "Login successful via Singpass"],
+  ["14/09/2026, 16:35:40", "quentin.loh@example.com", "S9846201F", "Download Policy Schedule - DHOM140029172600"],
+  ["14/09/2026, 15:51:27", "nathan.chua@example.com", "S8126784L", "Login failed via Email"],
+  ["14/09/2026, 15:23:01", "kavya.nair@example.com", "S9231058G", "Updated mobile no. 8888 1234 to 9999 1234"],
+  ["14/09/2026, 15:10:22", "haruto.sato@example.com", "G1582037K", "Reset Password"],
+  ["14/09/2026, 14:20:30", "elena.fernandez@example.com", "G1298456M", "Log Out"],
+  ["14/09/2026, 13:47:25", "rachel.seah@example.com", "S9037186H", "Download Claim Summary - CLMT220087341500"],
+  ["14/09/2026, 13:30:07", "olivia.wong@example.com", "S9413572C", "Login successful via Email"],
+  ["14/09/2026, 12:35:36", "lucas.teo@example.com", "S8912467I", "Signed Up"],
+  ["14/09/2026, 11:56:52", "isabelle.lee@example.com", "S9754102D", "Login failed via Singpass"],
+  ["14/09/2026, 11:22:14", "samuel.yap@example.com", "S8314692J", "Download Policy Schedule - DHOM140029172600"],
+  ["14/09/2026, 10:48:03", "priya.sharma@example.com", "G1092845P", "Updated email priya.old@example.com to priya.sharma@example.com"],
+  ["14/09/2026, 10:15:39", "mei.lin@example.com", "G1729348N", "Login successful via Singpass"],
+  ["14/09/2026, 09:40:12", "daniel.ong@example.com", "S8239045H", "Download Premium Notice - DHOM140029172600"],
+].map(([timestamp, customerEmail, customerNric, activity], i) => ({
+  id: String(i + 1),
+  timestamp,
+  customerEmail,
+  customerNric,
+  activity,
+  customerId: link(customerEmail),
+}))
