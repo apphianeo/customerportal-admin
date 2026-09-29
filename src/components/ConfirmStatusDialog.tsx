@@ -8,7 +8,7 @@ import {
 } from "@/components/ui/dialog"
 import { Button } from "@/components/ui/button"
 
-export type StatusAction = "deactivate" | "activate" | "verify" | "reject"
+export type StatusAction = "deactivate" | "reactivate" | "approve" | "reject"
 
 const COPY: Record<
   StatusAction,
@@ -31,26 +31,21 @@ const COPY: Record<
     confirm: "Deactivate Account",
     variant: "destructive",
   },
-  activate: {
-    title: "Activate customer account?",
-    body: (email) => (
-      <>
-        {email} will be activated and the user will be able to log in to the UOI
-        Customer Portal immediately.
-      </>
-    ),
-    confirm: "Confirm",
+  reactivate: {
+    title: "Reactivate customer account?",
+    body: (email) => <>{email} will regain access to the UOI Customer Portal.</>,
+    confirm: "Reactivate",
     variant: "default",
   },
-  verify: {
-    title: "Verify customer account?",
+  approve: {
+    title: "Approve customer account?",
     body: (email) => (
       <>
         Confirm that {email} has been reviewed and meets our requirements. They
         will gain full access to the UOI Customer Portal.
       </>
     ),
-    confirm: "Verify",
+    confirm: "Approve",
     variant: "default",
   },
   reject: {

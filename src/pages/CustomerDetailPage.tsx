@@ -51,9 +51,9 @@ export function CustomerDetailPage() {
         ? "deactivated"
         : dialog === "reject"
         ? "rejected"
-        : dialog === "verify"
-        ? "verified"
-        : "activated"
+        : dialog === "approve"
+        ? "approved"
+        : "reactivated"
     setStatus(next)
     setToast(`${customer!.loginId} has been ${verb}.`)
     setDialog(null)
@@ -64,12 +64,12 @@ export function CustomerDetailPage() {
   const actions: Array<{ label: string; action: StatusAction; danger?: boolean }> =
     status === "Pending"
       ? [
-          { label: "Verify", action: "verify" },
+          { label: "Approve", action: "approve" },
           { label: "Reject", action: "reject", danger: true },
         ]
       : status === "Active"
       ? [{ label: "Deactivate", action: "deactivate", danger: true }]
-      : [{ label: "Reactivate", action: "activate" }]
+      : [{ label: "Reactivate", action: "reactivate" }]
 
   const profile: Array<[string, string]> = [
     ["Salutation", customer.salutation],

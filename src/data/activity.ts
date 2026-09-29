@@ -2,6 +2,8 @@
 // Matches the "Activity Log › Admin Activity" tab in Figma: the affected
 // party is embedded in the action string (spec B), no separate customer column.
 
+import { customers } from "./customers"
+
 export type AdminRole = "Master Admin" | "UOI Admin"
 
 export interface Admin {
@@ -16,6 +18,7 @@ export interface AdminActivityEntry {
   admin: Admin
   action: string // e.g. "Deactivated rachel.seah@example.com"
   target?: string // the substring (email / name) to highlight as a link
+  targetId?: string // customer id, when the target resolves to a customer
 }
 
 export const ADMINS: Record<string, Admin> = {
@@ -29,7 +32,9 @@ export const ADMINS: Record<string, Admin> = {
 // The signed-in staff member (mock).
 export const currentAdmin: Admin = ADMINS.priya
 
-export const adminActivity: AdminActivityEntry[] = [
+const idByEmail = new Map(customers.map((c) => [c.loginId, c.id]))
+
+const RAW: AdminActivityEntry[] = [
   { id: "1", timestamp: "14/09/2026, 16:42:40", admin: ADMINS.priya, action: "Deactivated rachel.seah@example.com", target: "rachel.seah@example.com" },
   { id: "2", timestamp: "14/09/2026, 15:18:00", admin: ADMINS.marcus, action: "Verified samuel.yap@example.com", target: "samuel.yap@example.com" },
   { id: "3", timestamp: "14/09/2026, 13:56:12", admin: ADMINS.aisha, action: "Activated quentin.loh@example.com", target: "quentin.loh@example.com" },
@@ -49,3 +54,9 @@ export const adminActivity: AdminActivityEntry[] = [
   { id: "17", timestamp: "10/09/2026, 10:18:56", admin: ADMINS.marcus, action: "Verified chloe.ng@example.com", target: "chloe.ng@example.com" },
   { id: "18", timestamp: "09/09/2026, 16:44:32", admin: ADMINS.sophie, action: "Login" },
 ]
+
+// Resolve email targets to a customer id so the action can deep-link.
+export const adminActivity: AdminActivityEntry[] = RAW.map((e) => ({
+  ...e,
+  targetId: e.target ? idByEmail.get(e.target) : undefined,
+}))
