@@ -2,11 +2,14 @@
 // prototype reads realistically. Swap this module for a real API later — the
 // screens only depend on the exported shapes below.
 
-export type CustomerStatus = "Active" | "Deactivated" | "Disabled"
+export type CustomerStatus = "Active" | "Pending" | "Deactivated" | "Disabled"
 
 export interface AccountActivity {
   timestamp: string // "DD/MM/YYYY, HH:mm:ss" (SGT)
   activity: string
+  // Absent = performed by the customer themselves; present = an admin acted on
+  // the account. Drives the "Performed By" column on the customer detail page.
+  actor?: { name: string; role: "Master Admin" | "UOI Admin" }
 }
 
 export interface Customer {
@@ -31,6 +34,8 @@ const ADDRESS = "123 Pasir Ris St 21, #03-21, Singapore 645123"
 
 // Full account-activity trail shown on the customer detail page (Tiffany).
 const SAMPLE_ACTIVITY: AccountActivity[] = [
+  { timestamp: "14/09/2026, 16:45:12", activity: "Deactivated customer account", actor: { name: "Priya Menon", role: "Master Admin" } },
+  { timestamp: "14/09/2026, 09:12:03", activity: "Verified customer details", actor: { name: "Marcus Lee", role: "UOI Admin" } },
   { timestamp: "14/09/2026, 16:42:40", activity: "Clicked Policy Coverage - View All link" },
   { timestamp: "14/09/2026, 16:38:12", activity: "Download Policy Schedule - DHOM140029172600" },
   { timestamp: "14/09/2026, 16:35:07", activity: "Clicked Dashboard link" },
@@ -84,6 +89,10 @@ const SEEDS: Seed[] = [
   { loginId: "elena.fernandez@example.com", fullName: "Elena Fernandez", nric: "G1298456M", mobile: "+65 8891 2475", status: "Active", creationDate: "11/04/2024", lastLogin: "06/09/2026, 08:54:56", salutation: "Ms", dob: "02/12/1991" },
   { loginId: "daniel.ong@example.com", fullName: "Daniel Ong Kai Wen", nric: "S8239045H", mobile: "+65 9012 6638", status: "Active", creationDate: "29/03/2024", lastLogin: "07/09/2026, 16:03:44", salutation: "Mr", dob: "21/05/1985" },
   { loginId: "chloe.ng@example.com", fullName: "Chloe Ng Jia Yi", nric: "S9528314A", mobile: "+65 8467 9210", status: "Active", creationDate: "15/03/2024", lastLogin: "08/09/2026, 11:42:19", salutation: "Ms", dob: "07/08/1996" },
+  // Awaiting manual identity verification (Pending) — surfaced on the dashboard's
+  // "Pending verification" card and actioned via Verify / Reject.
+  { loginId: "aeris.teo@example.com", fullName: "Aeris Teo Xin Yi", nric: "S0012345A", mobile: "+65 8123 4567", status: "Pending", creationDate: "14/09/2026", lastLogin: "—", salutation: "Ms", dob: "10/03/2000" },
+  { loginId: "jordan.lim@example.com", fullName: "Jordan Lim Kai", nric: "S0154321B", mobile: "+65 8234 5678", status: "Pending", creationDate: "13/09/2026", lastLogin: "—", salutation: "Mr", dob: "22/07/1999" },
 ]
 
 // ── Generate additional rows so the table paginates like the real system ──
@@ -167,8 +176,12 @@ export function getCustomer(id: string): Customer | undefined {
   return customers.find((c) => c.id === id)
 }
 
-export const STATUS_TONE: Record<CustomerStatus, "success" | "error" | "neutral"> = {
+export const STATUS_TONE: Record<
+  CustomerStatus,
+  "success" | "caution" | "error" | "neutral"
+> = {
   Active: "success",
+  Pending: "caution",
   Deactivated: "error",
   Disabled: "neutral",
 }
