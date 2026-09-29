@@ -29,13 +29,14 @@ import {
 import { cn } from "@/lib/utils"
 
 const PAGE_SIZE = 20
-const STATUSES: CustomerStatus[] = ["Active", "Pending", "Deactivated", "Disabled"]
+const STATUSES: CustomerStatus[] = ["Active", "Pending", "Deactivated"]
 type SortKey = "creationDate" | "lastLogin"
 type SortDir = "asc" | "desc"
 
 function toTime(d: string): number {
   const [datePart, timePart] = d.split(", ")
   const [dd, mm, yy] = datePart.split("/").map(Number)
+  if (!dd || !mm || !yy) return 0 // e.g. "—" for a customer who never logged in
   let h = 0, mi = 0, s = 0
   if (timePart) [h, mi, s] = timePart.split(":").map(Number)
   return new Date(yy, mm - 1, dd, h, mi, s).getTime()
@@ -67,23 +68,20 @@ export function CustomersPage() {
         c.nric.toLowerCase().includes(q)
       )
     })
-    if (sortKey) {
-      rows.sort((a, b) => {
+    // Pending accounts are always pinned to the top (they need attention);
+    // within each group, an active column sort applies, otherwise latest login.
+    rows.sort((a, b) => {
+      const pa = statusOf(a) === "Pending" ? 0 : 1
+      const pb = statusOf(b) === "Pending" ? 0 : 1
+      if (pa !== pb) return pa - pb
+      if (sortKey) {
         const diff = toTime(a[sortKey]) - toTime(b[sortKey])
         return sortDir === "asc" ? diff : -diff
-      })
-    }
+      }
+      return toTime(b.lastLogin) - toTime(a.lastLogin)
+    })
     return rows
   }, [query, selected, allSelected, sortKey, sortDir, overrides])
-
-  const newThisMonth = useMemo(() => {
-    const key = (d: string) => {
-      const [, mm, yy] = d.split("/")
-      return `${yy}${mm}`
-    }
-    const max = ALL.reduce((m, c) => (key(c.creationDate) > m ? key(c.creationDate) : m), "")
-    return ALL.filter((c) => key(c.creationDate) === max).length
-  }, [])
 
   const pendingCount = useMemo(
     () => ALL.filter((c) => (overrides[c.id] ?? c.status) === "Pending").length,
@@ -122,9 +120,9 @@ export function CustomersPage() {
         ? "deactivated"
         : action === "reject"
         ? "rejected"
-        : action === "verify"
-        ? "verified"
-        : "activated"
+        : action === "approve"
+        ? "approved"
+        : "reactivated"
     setOverrides((prev) => ({ ...prev, [customer.id]: next }))
     setToast(`${customer.loginId} has been ${verb}.`)
     setDialog(null)
@@ -147,25 +145,20 @@ export function CustomersPage() {
 
         {/* Stat cards */}
         <div className="flex flex-wrap gap-4">
-          <div className="min-w-[240px] flex-1 rounded-[12px] border border-border bg-white p-4 shadow-[0px_1px_4px_0px_rgba(0,0,0,0.05)]">
+          <div className="min-w-[240px] flex-1 rounded-[12px] border border-border bg-white p-5 shadow-[0px_1px_4px_0px_rgba(0,0,0,0.05)]">
             <p className="text-sm text-text-secondary">Total customers</p>
-            <p className="mt-1 text-[32px] font-semibold leading-[1.2] text-foreground">
+            <p className="mt-2 text-[32px] font-semibold leading-[1.2] text-foreground">
               {ALL.length.toLocaleString()}
             </p>
-            <p className="mt-1 text-xs text-text-tertiary">
-              <span className="font-medium text-success">+{newThisMonth}</span> this
-              month
-            </p>
           </div>
-          <div className="min-w-[240px] flex-1 rounded-[12px] border border-caution-bg bg-caution-bg/30 p-4 shadow-[0px_1px_4px_0px_rgba(0,0,0,0.05)]">
+          <div className="min-w-[240px] flex-1 rounded-[12px] border border-border bg-caution-bg p-5 shadow-[0px_1px_4px_0px_rgba(0,0,0,0.05)]">
             <p className="flex items-center gap-2 text-sm text-text-secondary">
-              <span className="size-2 shrink-0 rounded-full bg-caution" />
+              <span className="size-2 shrink-0 rounded-full bg-[#F59E0B]" />
               Pending verification
             </p>
-            <p className="mt-1 text-[32px] font-semibold leading-[1.2] text-foreground">
+            <p className="mt-2 text-[32px] font-semibold leading-[1.2] text-foreground">
               {pendingCount}
             </p>
-            <p className="mt-1 text-xs text-text-tertiary">awaiting manual review</p>
           </div>
         </div>
 
@@ -305,10 +298,9 @@ export function CustomersPage() {
                             {status === "Pending" ? (
                               <>
                                 <DropdownMenuItem
-                                  className="text-primary focus:bg-info-bg"
-                                  onSelect={() => setDialog({ customer: c, action: "verify" })}
+                                  onSelect={() => setDialog({ customer: c, action: "approve" })}
                                 >
-                                  Verify
+                                  Approve
                                 </DropdownMenuItem>
                                 <DropdownMenuItem
                                   className="text-destructive focus:bg-destructive-bg"
@@ -322,14 +314,13 @@ export function CustomersPage() {
                                 className="text-destructive focus:bg-destructive-bg"
                                 onSelect={() => setDialog({ customer: c, action: "deactivate" })}
                               >
-                                Deactivate account
+                                Deactivate
                               </DropdownMenuItem>
                             ) : (
                               <DropdownMenuItem
-                                className="text-success focus:bg-success-bg"
-                                onSelect={() => setDialog({ customer: c, action: "activate" })}
+                                onSelect={() => setDialog({ customer: c, action: "reactivate" })}
                               >
-                                Activate account
+                                Reactivate
                               </DropdownMenuItem>
                             )}
                           </DropdownMenuContent>

@@ -20,14 +20,28 @@ function toTime(d: string): number {
   return new Date(yy, mm - 1, dd, h, mi, s).getTime()
 }
 
-// Renders an action string with its target substring styled as a link.
-function ActionText({ text, target }: { text: string; target?: string }) {
+// Renders an action string with its target substring as a link to the customer.
+function ActionText({
+  text,
+  target,
+  targetId,
+}: {
+  text: string
+  target?: string
+  targetId?: string
+}) {
   if (!target || !text.includes(target)) return <span>{text}</span>
   const [before, after] = text.split(target)
   return (
     <span>
       {before}
-      <span className="text-primary">{target}</span>
+      {targetId ? (
+        <Link to={`/customers/${targetId}`} className="text-primary hover:underline">
+          {target}
+        </Link>
+      ) : (
+        <span className="text-primary">{target}</span>
+      )}
       {after}
     </span>
   )
@@ -214,7 +228,7 @@ export function ActivityLogPage() {
                         </div>
                       </td>
                       <td className="px-4 py-3 align-top text-sm text-foreground">
-                        <ActionText text={e.action} target={e.target} />
+                        <ActionText text={e.action} target={e.target} targetId={e.targetId} />
                       </td>
                     </tr>
                   ))}

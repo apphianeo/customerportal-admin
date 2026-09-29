@@ -2,7 +2,7 @@
 // prototype reads realistically. Swap this module for a real API later — the
 // screens only depend on the exported shapes below.
 
-export type CustomerStatus = "Active" | "Pending" | "Deactivated" | "Disabled"
+export type CustomerStatus = "Active" | "Pending" | "Deactivated"
 
 export interface AccountActivity {
   timestamp: string // "DD/MM/YYYY, HH:mm:ss" (SGT)
@@ -85,12 +85,12 @@ const SEEDS: Seed[] = [
   { loginId: "isabelle.lee@example.com", fullName: "Isabelle Lee Jia En", nric: "S9754102D", mobile: "+65 8864 5513", status: "Active", creationDate: "06/06/2024", lastLogin: "02/09/2026, 12:09:48", salutation: "Ms", dob: "25/10/1997" },
   { loginId: "haruto.sato@example.com", fullName: "Haruto Sato", nric: "G1582037K", mobile: "+65 9187 4620", status: "Deactivated", creationDate: "19/05/2024", lastLogin: "03/09/2026, 19:44:04", salutation: "Mr", dob: "08/01/1986" },
   { loginId: "grace.koh@example.com", fullName: "Grace Koh Hui Min", nric: "S9345821B", mobile: "+65 8334 7902", status: "Active", creationDate: "08/05/2024", lastLogin: "04/09/2026, 10:18:28", salutation: "Ms", dob: "16/07/1993" },
-  { loginId: "farhan.rahman@example.com", fullName: "Farhan Rahman", nric: "S8872314J", mobile: "+65 9675 1128", status: "Disabled", creationDate: "22/04/2024", lastLogin: "05/09/2026, 13:37:56", salutation: "Mr", dob: "29/03/1982" },
+  { loginId: "farhan.rahman@example.com", fullName: "Farhan Rahman", nric: "S8872314J", mobile: "+65 9675 1128", status: "Deactivated", creationDate: "22/04/2024", lastLogin: "05/09/2026, 13:37:56", salutation: "Mr", dob: "29/03/1982" },
   { loginId: "elena.fernandez@example.com", fullName: "Elena Fernandez", nric: "G1298456M", mobile: "+65 8891 2475", status: "Active", creationDate: "11/04/2024", lastLogin: "06/09/2026, 08:54:56", salutation: "Ms", dob: "02/12/1991" },
   { loginId: "daniel.ong@example.com", fullName: "Daniel Ong Kai Wen", nric: "S8239045H", mobile: "+65 9012 6638", status: "Active", creationDate: "29/03/2024", lastLogin: "07/09/2026, 16:03:44", salutation: "Mr", dob: "21/05/1985" },
   { loginId: "chloe.ng@example.com", fullName: "Chloe Ng Jia Yi", nric: "S9528314A", mobile: "+65 8467 9210", status: "Active", creationDate: "15/03/2024", lastLogin: "08/09/2026, 11:42:19", salutation: "Ms", dob: "07/08/1996" },
   // Awaiting manual identity verification (Pending) — surfaced on the dashboard's
-  // "Pending verification" card and actioned via Verify / Reject.
+  // "Pending verification" card and actioned via Approve / Reject.
   { loginId: "aeris.teo@example.com", fullName: "Aeris Teo Xin Yi", nric: "S0012345A", mobile: "+65 8123 4567", status: "Pending", creationDate: "14/09/2026", lastLogin: "—", salutation: "Ms", dob: "10/03/2000" },
   { loginId: "jordan.lim@example.com", fullName: "Jordan Lim Kai", nric: "S0154321B", mobile: "+65 8234 5678", status: "Pending", creationDate: "13/09/2026", lastLogin: "—", salutation: "Mr", dob: "22/07/1999" },
 ]
@@ -112,7 +112,7 @@ const LAST = [
 ]
 const STATUS_CYCLE: CustomerStatus[] = [
   "Active", "Active", "Active", "Active", "Active", "Active", "Active",
-  "Deactivated", "Active", "Active", "Disabled", "Active",
+  "Deactivated", "Active", "Active", "Deactivated", "Active",
 ]
 const PREFIX = ["S", "S", "S", "S", "G", "T"]
 
@@ -176,12 +176,8 @@ export function getCustomer(id: string): Customer | undefined {
   return customers.find((c) => c.id === id)
 }
 
-export const STATUS_TONE: Record<
-  CustomerStatus,
-  "success" | "caution" | "error" | "neutral"
-> = {
+export const STATUS_TONE: Record<CustomerStatus, "success" | "caution" | "error"> = {
   Active: "success",
   Pending: "caution",
   Deactivated: "error",
-  Disabled: "neutral",
 }
