@@ -18,7 +18,7 @@ import {
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu"
 import { CheckboxSquare, SortIcon } from "@/components/icons"
-import { ConfirmStatusDialog } from "@/components/ConfirmStatusDialog"
+import { ConfirmStatusDialog, type StatusAction } from "@/components/ConfirmStatusDialog"
 import { Toast } from "@/components/Toast"
 import {
   customers as ALL,
@@ -29,7 +29,7 @@ import {
 import { cn } from "@/lib/utils"
 
 const PAGE_SIZE = 20
-const STATUSES: CustomerStatus[] = ["Active", "Deactivated", "Disabled"]
+const STATUSES: CustomerStatus[] = ["Active", "Pending", "Deactivated", "Disabled"]
 type SortKey = "creationDate" | "lastLogin"
 type SortDir = "asc" | "desc"
 
@@ -50,7 +50,7 @@ export function CustomersPage() {
   const [sortDir, setSortDir] = useState<SortDir>("asc")
   // Local status changes made from the table, keyed by customer id.
   const [overrides, setOverrides] = useState<Record<string, CustomerStatus>>({})
-  const [dialog, setDialog] = useState<{ customer: Customer; action: "deactivate" | "activate" } | null>(null)
+  const [dialog, setDialog] = useState<{ customer: Customer; action: StatusAction } | null>(null)
   const [toast, setToast] = useState<string | null>(null)
 
   const statusOf = (c: Customer): CustomerStatus => overrides[c.id] ?? c.status
@@ -85,6 +85,11 @@ export function CustomersPage() {
     return ALL.filter((c) => key(c.creationDate) === max).length
   }, [])
 
+  const pendingCount = useMemo(
+    () => ALL.filter((c) => (overrides[c.id] ?? c.status) === "Pending").length,
+    [overrides]
+  )
+
   const totalPages = Math.max(1, Math.ceil(filtered.length / PAGE_SIZE))
   const current = Math.min(page, totalPages)
   const rows = filtered.slice((current - 1) * PAGE_SIZE, current * PAGE_SIZE)
@@ -109,13 +114,19 @@ export function CustomersPage() {
 
   function confirmDialog() {
     if (!dialog) return
-    const next: CustomerStatus = dialog.action === "deactivate" ? "Deactivated" : "Active"
-    setOverrides((prev) => ({ ...prev, [dialog.customer.id]: next }))
-    setToast(
-      `${dialog.customer.loginId} has been ${
-        dialog.action === "deactivate" ? "deactivated" : "activated"
-      }.`
-    )
+    const { customer, action } = dialog
+    const next: CustomerStatus =
+      action === "deactivate" || action === "reject" ? "Deactivated" : "Active"
+    const verb =
+      action === "deactivate"
+        ? "deactivated"
+        : action === "reject"
+        ? "rejected"
+        : action === "verify"
+        ? "verified"
+        : "activated"
+    setOverrides((prev) => ({ ...prev, [customer.id]: next }))
+    setToast(`${customer.loginId} has been ${verb}.`)
     setDialog(null)
   }
 
@@ -134,16 +145,28 @@ export function CustomersPage() {
           Customers
         </h1>
 
-        {/* Stat card */}
-        <div className="w-[266px] rounded-[12px] border border-border bg-white p-4 shadow-[0px_1px_4px_0px_rgba(0,0,0,0.05)]">
-          <p className="text-sm text-text-secondary">Total users</p>
-          <p className="mt-1 text-[32px] font-semibold leading-[1.2] text-foreground">
-            {ALL.length.toLocaleString()}
-          </p>
-          <p className="mt-1 text-xs text-text-tertiary">
-            <span className="font-medium text-success">+{newThisMonth}</span> this
-            month
-          </p>
+        {/* Stat cards */}
+        <div className="flex flex-wrap gap-4">
+          <div className="min-w-[240px] flex-1 rounded-[12px] border border-border bg-white p-4 shadow-[0px_1px_4px_0px_rgba(0,0,0,0.05)]">
+            <p className="text-sm text-text-secondary">Total customers</p>
+            <p className="mt-1 text-[32px] font-semibold leading-[1.2] text-foreground">
+              {ALL.length.toLocaleString()}
+            </p>
+            <p className="mt-1 text-xs text-text-tertiary">
+              <span className="font-medium text-success">+{newThisMonth}</span> this
+              month
+            </p>
+          </div>
+          <div className="min-w-[240px] flex-1 rounded-[12px] border border-caution-bg bg-caution-bg/30 p-4 shadow-[0px_1px_4px_0px_rgba(0,0,0,0.05)]">
+            <p className="flex items-center gap-2 text-sm text-text-secondary">
+              <span className="size-2 shrink-0 rounded-full bg-caution" />
+              Pending verification
+            </p>
+            <p className="mt-1 text-[32px] font-semibold leading-[1.2] text-foreground">
+              {pendingCount}
+            </p>
+            <p className="mt-1 text-xs text-text-tertiary">awaiting manual review</p>
+          </div>
         </div>
 
         {/* Toolbar */}
@@ -279,7 +302,22 @@ export function CustomersPage() {
                             <DropdownMenuItem onSelect={() => navigate(`/customers/${c.id}`)}>
                               View details
                             </DropdownMenuItem>
-                            {status === "Active" ? (
+                            {status === "Pending" ? (
+                              <>
+                                <DropdownMenuItem
+                                  className="text-primary focus:bg-info-bg"
+                                  onSelect={() => setDialog({ customer: c, action: "verify" })}
+                                >
+                                  Verify
+                                </DropdownMenuItem>
+                                <DropdownMenuItem
+                                  className="text-destructive focus:bg-destructive-bg"
+                                  onSelect={() => setDialog({ customer: c, action: "reject" })}
+                                >
+                                  Reject
+                                </DropdownMenuItem>
+                              </>
+                            ) : status === "Active" ? (
                               <DropdownMenuItem
                                 className="text-destructive focus:bg-destructive-bg"
                                 onSelect={() => setDialog({ customer: c, action: "deactivate" })}

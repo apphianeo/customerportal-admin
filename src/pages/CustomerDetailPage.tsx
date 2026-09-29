@@ -1,8 +1,9 @@
 import { useState } from "react"
 import { Link, useParams } from "react-router-dom"
-import { ChevronRight, CircleCheck, CircleX } from "lucide-react"
+import { ChevronRight } from "lucide-react"
 import { Badge } from "@/components/ui/badge"
-import { ConfirmStatusDialog } from "@/components/ConfirmStatusDialog"
+import { Button } from "@/components/ui/button"
+import { ConfirmStatusDialog, type StatusAction } from "@/components/ConfirmStatusDialog"
 import { Toast } from "@/components/Toast"
 import {
   getCustomer,
@@ -25,7 +26,7 @@ export function CustomerDetailPage() {
   const customer = id ? getCustomer(id) : undefined
 
   const [status, setStatus] = useState<CustomerStatus>(customer?.status ?? "Active")
-  const [dialogOpen, setDialogOpen] = useState(false)
+  const [dialog, setDialog] = useState<StatusAction | null>(null)
   const [toast, setToast] = useState<string | null>(null)
 
   if (!customer) {
@@ -41,16 +42,34 @@ export function CustomerDetailPage() {
     )
   }
 
-  const isActive = status === "Active"
-
-  function confirmToggle() {
-    const next: CustomerStatus = isActive ? "Deactivated" : "Active"
+  function confirmAction() {
+    if (!dialog) return
+    const next: CustomerStatus =
+      dialog === "deactivate" || dialog === "reject" ? "Deactivated" : "Active"
+    const verb =
+      dialog === "deactivate"
+        ? "deactivated"
+        : dialog === "reject"
+        ? "rejected"
+        : dialog === "verify"
+        ? "verified"
+        : "activated"
     setStatus(next)
-    setDialogOpen(false)
-    setToast(
-      `${customer!.loginId} has been ${next === "Active" ? "activated" : "deactivated"}.`
-    )
+    setToast(`${customer!.loginId} has been ${verb}.`)
+    setDialog(null)
   }
+
+  // Status-driven actions, rendered top-right. Safe/recovery actions are the
+  // prominent primary; the destructive one is a quieter red outline.
+  const actions: Array<{ label: string; action: StatusAction; danger?: boolean }> =
+    status === "Pending"
+      ? [
+          { label: "Verify", action: "verify" },
+          { label: "Reject", action: "reject", danger: true },
+        ]
+      : status === "Active"
+      ? [{ label: "Deactivate", action: "deactivate", danger: true }]
+      : [{ label: "Reactivate", action: "activate" }]
 
   const profile: Array<[string, string]> = [
     ["Salutation", customer.salutation],
@@ -80,12 +99,27 @@ export function CustomerDetailPage() {
           <span className="font-semibold text-primary">{customer.fullName}</span>
         </nav>
 
-        {/* Title */}
-        <div className="flex items-center gap-3">
+        {/* Title + status action(s) */}
+        <div className="flex flex-wrap items-center gap-3">
           <h1 className="text-[32px] font-semibold leading-[1.2] text-foreground">
             {customer.fullName}
           </h1>
           <Badge tone={STATUS_TONE[status]}>{status}</Badge>
+          <div className="ml-auto flex items-center gap-3">
+            {actions.map((a) => (
+              <Button
+                key={a.action}
+                variant={a.danger ? "outline" : "default"}
+                onClick={() => setDialog(a.action)}
+                className={cn(
+                  a.danger &&
+                    "border-destructive text-destructive hover:bg-destructive-bg"
+                )}
+              >
+                {a.label}
+              </Button>
+            ))}
+          </div>
         </div>
 
         {/* Customer Profile */}
@@ -114,11 +148,14 @@ export function CustomerDetailPage() {
               <table className="w-full border-collapse text-left">
                 <thead>
                   <tr className="bg-muted">
-                    <th className="w-[220px] px-4 py-3 text-sm font-medium text-text-tertiary">
+                    <th className="w-[200px] px-4 py-3 text-sm font-medium text-text-tertiary">
                       Timestamp (SGT)
                     </th>
                     <th className="px-4 py-3 text-sm font-medium text-text-tertiary">
                       Activity
+                    </th>
+                    <th className="w-[280px] px-4 py-3 text-sm font-medium text-text-tertiary">
+                      Performed By
                     </th>
                   </tr>
                 </thead>
@@ -130,6 +167,23 @@ export function CustomerDetailPage() {
                       </td>
                       <td className="px-4 py-3 text-sm text-text-secondary">
                         {a.activity}
+                      </td>
+                      <td className="px-4 py-3">
+                        <span className="inline-flex items-center gap-2">
+                          <span className="text-sm text-foreground">
+                            {a.actor ? a.actor.name : customer.fullName}
+                          </span>
+                          <span
+                            className={cn(
+                              "shrink-0 rounded-full px-2 py-0.5 text-xs",
+                              a.actor
+                                ? "bg-info-bg text-primary"
+                                : "bg-muted text-text-secondary"
+                            )}
+                          >
+                            {a.actor ? a.actor.role : "Customer"}
+                          </span>
+                        </span>
                       </td>
                     </tr>
                   ))}
@@ -160,33 +214,14 @@ export function CustomerDetailPage() {
             </div>
           </div>
         </section>
-
-        {/* Status action — plain text button, no hover fill */}
-        <div className="border-t border-border pt-6">
-          <button
-            type="button"
-            onClick={() => setDialogOpen(true)}
-            className={cn(
-              "inline-flex items-center gap-2 bg-transparent text-base font-medium",
-              isActive ? "text-destructive" : "text-success"
-            )}
-          >
-            {isActive ? (
-              <CircleX className="h-5 w-5" />
-            ) : (
-              <CircleCheck className="h-5 w-5" />
-            )}
-            {isActive ? "Deactivate account" : "Activate account"}
-          </button>
-        </div>
       </div>
 
       <ConfirmStatusDialog
-        open={dialogOpen}
-        onOpenChange={setDialogOpen}
-        action={isActive ? "deactivate" : "activate"}
+        open={dialog !== null}
+        onOpenChange={(o) => !o && setDialog(null)}
+        action={dialog ?? "deactivate"}
         email={customer.loginId}
-        onConfirm={confirmToggle}
+        onConfirm={confirmAction}
       />
     </div>
   )
